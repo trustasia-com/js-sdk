@@ -3,7 +3,11 @@
 
 export function iso8601() {
   const date = new Date();
-  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+  return date
+    .toISOString()
+    .replace(/\.\d{3}Z$/, "Z")
+    .replace(/-/g, "")
+    .replace(/:/g, "");
 }
 
 export function uriEscape(str: string) {
@@ -29,7 +33,7 @@ export function uriEscapePath(str: string) {
 export function each(obj: any, iterFunction: Function) {
   for (var key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      var ret = iterFunction.call(key, obj[key]);
+      var ret = iterFunction.call(this, key, obj[key]);
       if (ret === {}) break;
     }
   }

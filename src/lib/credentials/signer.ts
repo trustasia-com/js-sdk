@@ -9,7 +9,7 @@ import { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 
 // http header
 const httpHeaderDate = "X-WeKey-Date";
-// const httpHeaderHost = "Host";
+const httpHeaderHost = "Host";
 const httpHeaderAuthorization = "Authorization";
 
 // Signature and API related constants
@@ -42,21 +42,25 @@ export function SignerDefault(
   let canonicalReq: string[] = [];
   canonicalReq.push(req.method + "\n");
 
-  const parsed = parse(req.url || "");
+  const parsed = parse(req.url);
+  req.headers[httpHeaderHost] = parsed.hostname;
   let pathname = parsed.pathname;
   if (pathname === "") {
     pathname = "/";
   }
   canonicalReq.push(pathname + "\n");
-  canonicalReq.push(uriEscapePath(parsed.search?.substring(1)) + "\n");
+
+  canonicalReq.push(
+    uriEscapePath(parsed.query ? parsed.query.substring(1) : "") + "\n"
+  );
   // other headers
   const headers = getCanonicalHeaders(req.headers);
   canonicalReq.push(headers.canonicalHeaders + "\n");
   canonicalReq.push(headers.signedHeaders + "\n");
 
-  let hash = encHex.stringify(sha256(JSON.stringify(req.data)));
+  let hash = encHex.stringify(sha256(req.data));
   canonicalReq.push(hash);
-  hash = encHex.stringify(sha256(canonicalReq.toString()));
+  hash = encHex.stringify(sha256(canonicalReq.join('')));
 
   // set headers
   const date = iso8601();

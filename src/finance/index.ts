@@ -1,13 +1,14 @@
 import { Session } from "../lib/credentials";
 import { CreateSubscribeReq, CreateSubscribeResp } from "./types";
-import { HttpClient, NewRequest } from "../lib/client/client";
+import { HttpClient } from "../lib/client/client";
 
-export class IDmelonClient {
+export class FinanceClient {
   httpClient: HttpClient;
   session: Session;
 
-  constructor(sess: Session) {
+  constructor(sess: Session, cli: HttpClient) {
     this.session = sess;
+    this.httpClient = cli;
   }
 
   async CreateSubscribe(req: CreateSubscribeReq): Promise<CreateSubscribeResp> {
@@ -23,7 +24,11 @@ export class IDmelonClient {
 
     // const data = JSON.stringify(req);
     const scope = "finance/";
-    const httpReq = NewRequest("/ta-finance/subscribe", "POST");
+    const httpReq = this.httpClient.newRequest(
+      "/ta-finance/subscribe",
+      "POST",
+      req
+    );
 
     this.session.signRequest(httpReq, scope);
 
