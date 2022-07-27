@@ -1,6 +1,6 @@
 {
   "name": "@trustasia/js-sdk",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "TrustAsia Node.js/JavaScript SDK",
   "main": "build/main/index.js",
   "repository": {
