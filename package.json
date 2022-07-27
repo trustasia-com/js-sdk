@@ -1,0 +1,45 @@
+{
+  "name": "js-sdk",
+  "version": "0.1.0",
+  "description": "TrustAsia Node.js/JavaScript SDK",
+  "main": "build/main/index.js",
+  "repository": "git@github.com:trustasia-com/js-sdk.git",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "run-s clean && run-s build:*",
+    "build:main": "npm run copyFiles:main && tsc -p tsconfig.json",
+    "build:module": "npm run copyFiles:module && tsc -p tsconfig.module.json",
+    "build:umd": "npm run copyFiles:umd && tsc -p tsconfig.browser.json",
+    "copyFiles:main": "copyfiles -u 1 \"src/**/*.js\" build/main",
+    "copyFiles:module": "copyfiles -u 1 \"src/**/*.js\" build/module",
+    "copyFiles:umd": "copyfiles -u 1 \"src/**/*.js\" build/umd",
+    "build:browser": "webpack",
+    "clean": "rm -rf build && rm -rf test"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "buffer": "^6.0.3",
+    "crypto-js": "^4.1.1",
+    "url": "^0.11.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-transform-runtime": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@babel/preset-typescript": "^7.12.7",
+    "@types/crypto-js": "^4.1.1",
+    "copyfiles": "^2.4.1",
+    "crypto-browserify": "^3.12.0",
+    "npm-run-all": "^4.1.5",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
+    "ts-loader": "^8.0.14",
+    "tslint": "^5.18.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-immutable": "^6.0.1",
+    "typescript": "^4.3.5",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  }
+}
