@@ -6,9 +6,9 @@ export class FinanceClient {
   httpClient: HttpClient;
   session: Session;
 
-  constructor(sess: Session, cli: HttpClient) {
+  constructor(sess: Session, endpoint: string) {
     this.session = sess;
-    this.httpClient = cli;
+    this.httpClient = new HttpClient(endpoint);
   }
 
   async CreateSubscribe(req: CreateSubscribeReq): Promise<CreateSubscribeResp> {
@@ -32,7 +32,6 @@ export class FinanceClient {
 
     this.session.signRequest(httpReq, scope);
 
-    const resp = await this.httpClient.request(httpReq);
-    return { subscribe_id: resp.subscribe_id || "" };
+    return await this.httpClient.request(httpReq);
   }
 }

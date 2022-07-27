@@ -1,12 +1,9 @@
 const { FinanceClient } = require("../build/main/finance");
 const { Session } = require("../build/main/lib/credentials");
-const { HttpClient } = require("../build/main/lib/client/client");
 const express = require("express");
 
 const app = express();
 const port = 3000;
-
-const httpCli = new HttpClient("http://localhost:9000");
 
 const session = new Session(
   {
@@ -15,19 +12,19 @@ const session = new Session(
   },
   false
 );
-const client = new FinanceClient(session, httpCli);
+const client = new FinanceClient(session, "http://localhost:9000");
 
-app.get("/subscribe", (req, res) => {
+app.get("/subscribe", async (req, res) => {
   const subReq = {
     user_id: "test_js_user",
     nickname: "test_js_nickname",
     product_id: "test_product_code_subscribe",
   };
   try {
-    const resp = client.CreateSubscribe(subReq);
+    const resp = await client.CreateSubscribe(subReq);
     res.send(resp);
   } catch (error) {
-    res.send(error);
+    res.send(error.response.data);
   }
 });
 

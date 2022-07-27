@@ -15,7 +15,7 @@
     "copyFiles:module": "copyfiles -u 1 \"src/**/*.js\" build/module",
     "copyFiles:umd": "copyfiles -u 1 \"src/**/*.js\" build/umd",
     "build:browser": "webpack",
-    "clean": "rm -rf build && rm -rf test"
+    "clean": "rm -rf build"
   },
   "dependencies": {
     "axios": "^0.27.2",
