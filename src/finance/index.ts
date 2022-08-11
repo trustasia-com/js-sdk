@@ -1,6 +1,5 @@
 import { Session } from "../lib/credentials";
 import {
-  CallbackContent,
   CreateSubscribeReq,
   CreateSubscribeResp,
   FinanceCallbackReq,
