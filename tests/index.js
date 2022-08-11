@@ -32,11 +32,14 @@ app.get("/subscribe", async (_req, res) => {
 app.post("/callback", (req, res) => {
   try {
     const data = client.FinanceCallback(req);
+
+    // parse content
+    const content = JSON.parse(Buffer.from(data.content, "base64").toString());
     switch (data.do) {
       case FinanceDoRenew:
         // TODO handle
-        console.log(data);
-        res.status(200).send('success');
+        console.log(content);
+        res.status(200).send("success");
         break;
       default:
         res.send("unsupported action");

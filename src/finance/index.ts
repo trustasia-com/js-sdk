@@ -42,7 +42,7 @@ export class FinanceClient {
     return await this.httpClient.request(httpReq);
   }
 
-  FinanceCallback(req: Request): CallbackContent {
+  FinanceCallback(req: Request): FinanceCallbackReq {
     const data = req.body as FinanceCallbackReq;
 
     const plaintext = stringify(
@@ -61,7 +61,6 @@ export class FinanceClient {
     if (data.sign !== this.session.sumHMAC(plaintext)) {
       throw new Error("failed to validate signature");
     }
-    const json = Buffer.from(data.content, "base64").toString();
-    return JSON.parse(json) as CallbackContent;
+    return data;
   }
 }
