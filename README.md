@@ -1,8 +1,20 @@
 # TrustAsia - Node.js/JavaScript
 
+### Install
+
+npm
 ```
-const { FinanceClient } = require("../build/main/finance");
-const { Session } = require("../build/main/lib/credentials");
+$ npm install @trustasia/js-sdk
+```
+
+yarn
+```
+$ yarn add @trustasia/js-sdk
+```
+
+### Example
+```
+import { FinanceClient, Session } from "@trustasia/js-sdk";
 const express = require("express");
 
 const app = express();
