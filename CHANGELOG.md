@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/trustasia-com/js-sdk/compare/v1.1.0...v1.1.1) (2022-08-11)
+
+
+### Bug Fixes
+
+* ci ([2c18ca1](https://github.com/trustasia-com/js-sdk/commit/2c18ca191a5b627da5b443357a66c9d8880a2a88))
+
 ## 1.1.0 (2022-08-11)
 
 
