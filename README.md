@@ -14,13 +14,13 @@ $ yarn add @trustasia/js-sdk
 
 ### Example
 ```
-import { FinanceClient, Session } from "@trustasia/js-sdk";
+import { FinanceClient, FinanceDoRenew, Session } from "@trustasia/js-sdk";
 const express = require("express");
 
 const app = express();
+app.use(express.json());
 const port = 3000;
 
-// session credential
 const session = new Session(
   {
     accessKey: "test_mch",
@@ -28,10 +28,9 @@ const session = new Session(
   },
   false
 );
-// finance client
 const client = new FinanceClient(session, "http://localhost:9000");
 
-app.get("/subscribe", async (req, res) => {
+app.get("/subscribe", async (_req, res) => {
   const subReq = {
     user_id: "test_js_user",
     nickname: "test_js_nickname",
@@ -42,6 +41,27 @@ app.get("/subscribe", async (req, res) => {
     res.send(resp);
   } catch (error) {
     res.send(error.response.data);
+  }
+});
+
+app.post("/callback", (req, res) => {
+  try {
+    const data = client.FinanceCallback(req);
+
+    // parse content
+    const content = JSON.parse(Buffer.from(data.content, "base64").toString());
+    switch (data.do) {
+      case FinanceDoRenew:
+        // TODO handle
+        console.log(content);
+        res.status(200).send("success");
+        break;
+      default:
+        res.send("unsupported action");
+        break;
+    }
+  } catch (error) {
+    res.status(400).send(`${error}`);
   }
 });
 
