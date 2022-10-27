@@ -1,6 +1,12 @@
 import Axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { buildUserAgent } from "../version";
 
+export interface Message {
+  code: number;
+  data?: any;
+  error?: string;
+}
+
 export class HttpClient {
   axios: AxiosInstance;
   baseURL: string;
@@ -16,7 +22,11 @@ export class HttpClient {
 
   async request(req: AxiosRequestConfig) {
     req.baseURL = this.baseURL;
-    req.headers["User-Agent"] = this.userAgent;
+    if (req.headers) {
+      req.headers["User-Agent"] = this.userAgent;
+    } else {
+      req.headers = { "User-Agent": this.userAgent };
+    }
 
     const { data } = await this.axios.request(req);
     if (data.code !== 0) {
@@ -25,12 +35,12 @@ export class HttpClient {
     return data.data;
   }
 
-  newRequest(url: string, method: string, data: object): AxiosRequestConfig {
+  newRequest(url: string, method: string, data?: object): AxiosRequestConfig {
     return {
       url: `${this.baseURL}${url}`,
       baseURL: this.baseURL,
       method: method,
-      data: JSON.stringify(data),
+      data: data ? JSON.stringify(data) : undefined,
     };
   }
 }
