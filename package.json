@@ -26,7 +26,7 @@
     "crypto-js": "^4.1.1",
     "protobufjs": "^7.2.3",
     "url": "^0.11.0",
-    "ws": "^8.13.0"
+    "websocket": "^1.0.34"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

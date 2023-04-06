@@ -2,22 +2,27 @@ import * as pb from "./pb";
 
 export class KeyManager {
   socket: WebSocket;
+  alive: boolean;
 
   constructor(endpoint: string) {
     const socket = new WebSocket(endpoint);
-    socket.onopen = this.onSocketOpen;
-    socket.onclose = this.onSocketClose;
-    socket.onmessage = this.onSocketMessage;
+    socket.onclose = (e) => this.onSocketClose(e);
+    socket.onopen = (e) => this.onSocketOpen(e);
+    socket.onmessage = (e) => this.onSocketMessage(e);
+    socket.binaryType = "arraybuffer";
 
+    this.alive = false;
     this.socket = socket;
   }
 
   // websocket event handler
   onSocketOpen(event: Event) {
     console.log("connection opened", event.target);
+    this.alive = true;
   }
   onSocketClose(event: CloseEvent) {
     console.log("connection closed: ", event.code, event.reason);
+    this.alive = false;
   }
   onSocketMessage(event: MessageEvent) {
     console.log("received a message");
@@ -25,15 +30,30 @@ export class KeyManager {
     const obj = this.unmarshalProto(event.data);
     console.log(obj);
   }
-  // send message
-  send(mt: pb.MessageType, obj: object) {
-    this.marshalProto(mt, obj);
+  // export functions
+  echoEvent(e: pb.EchoEvent) {
+    const reqID = this.getReqID();
+    console.log(reqID);
+    this.send(pb.MessageType.Echo, e);
   }
 
+  // request id
+  private getReqID(): number {
+    return Date.now();
+  }
+  // send message
+  private send(mt: pb.MessageType, obj: object) {
+    console.log("send: ", mt, this.alive);
+    if (!this.alive) {
+      throw Error("Websocket connection not alive");
+    }
+    this.marshalProto(mt, obj);
+  }
   // message encode / decode
-  unmarshalProto(data: Uint8Array): object {
-    const mt = new DataView(data.slice(0, 4)).getInt32(0, false);
-    const body = data.slice(4);
+  private unmarshalProto(buf: ArrayBuffer) {
+    const bytes = buf.slice(0, 4);
+    const mt = new DataView(bytes).getInt32(0, false);
+    const body = new Uint8Array(buf.slice(4));
 
     switch (pb.decodeMessageType[mt]) {
       case pb.MessageType.Echo:
@@ -49,8 +69,7 @@ export class KeyManager {
     }
     throw Error("Unsupported message type");
   }
-
-  marshalProto(mt: pb.MessageType, msg: object): void {
+  private marshalProto(mt: pb.MessageType, msg: object) {
     let data: Uint8Array;
     switch (mt) {
       case pb.MessageType.Echo:

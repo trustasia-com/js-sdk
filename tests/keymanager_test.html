@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <script src="../build/browser/index.min.js"></script>
+  </head>
+  <body>
+    <script>
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+      var km;
+      try {
+        km = new TrustAsia.KeyManager("ws://localhost:8878/smime/wb");
+      } catch (error) {
+        console.log(error);
+      }
+
+      async function sendMessage() {
+        for (let i = 0; i < 10; i++) {
+          await sleep(1000);
+          try {
+            km.echoEvent({msg: 'hello world!'});
+          } catch (error) {
+            console.log(error);
+          }
+        }
+      }
+      sendMessage();
+    </script>
+  </body>
+</html>

@@ -700,32 +700,32 @@ function skipUnknownField(bb: ByteBuffer, type: number): void {
   }
 }
 
-function stringToLong(value: string): Long {
-  return {
-    low: value.charCodeAt(0) | (value.charCodeAt(1) << 16),
-    high: value.charCodeAt(2) | (value.charCodeAt(3) << 16),
-    unsigned: false,
-  };
-}
+// function stringToLong(value: string): Long {
+//   return {
+//     low: value.charCodeAt(0) | (value.charCodeAt(1) << 16),
+//     high: value.charCodeAt(2) | (value.charCodeAt(3) << 16),
+//     unsigned: false,
+//   };
+// }
 
-function longToString(value: Long): string {
-  let low = value.low;
-  let high = value.high;
-  return String.fromCharCode(
-    low & 0xFFFF,
-    low >>> 16,
-    high & 0xFFFF,
-    high >>> 16);
-}
+// function longToString(value: Long): string {
+//   let low = value.low;
+//   let high = value.high;
+//   return String.fromCharCode(
+//     low & 0xFFFF,
+//     low >>> 16,
+//     high & 0xFFFF,
+//     high >>> 16);
+// }
 
 // The code below was modified from https://github.com/protobufjs/bytebuffer.js
 // which is under the Apache License 2.0.
 
-let f32 = new Float32Array(1);
-let f32_u8 = new Uint8Array(f32.buffer);
+// let f32 = new Float32Array(1);
+// let f32_u8 = new Uint8Array(f32.buffer);
 
-let f64 = new Float64Array(1);
-let f64_u8 = new Uint8Array(f64.buffer);
+// let f64 = new Float64Array(1);
+// let f64_u8 = new Uint8Array(f64.buffer);
 
 function intToLong(value: number): Long {
   value |= 0;
@@ -946,94 +946,94 @@ function writeByte(bb: ByteBuffer, value: number): void {
   bb.bytes[offset] = value;
 }
 
-function readFloat(bb: ByteBuffer): number {
-  let offset = advance(bb, 4);
-  let bytes = bb.bytes;
+// function readFloat(bb: ByteBuffer): number {
+//   let offset = advance(bb, 4);
+//   let bytes = bb.bytes;
 
-  // Manual copying is much faster than subarray+set in V8
-  f32_u8[0] = bytes[offset++];
-  f32_u8[1] = bytes[offset++];
-  f32_u8[2] = bytes[offset++];
-  f32_u8[3] = bytes[offset++];
-  return f32[0];
-}
+//   // Manual copying is much faster than subarray+set in V8
+//   f32_u8[0] = bytes[offset++];
+//   f32_u8[1] = bytes[offset++];
+//   f32_u8[2] = bytes[offset++];
+//   f32_u8[3] = bytes[offset++];
+//   return f32[0];
+// }
 
-function writeFloat(bb: ByteBuffer, value: number): void {
-  let offset = grow(bb, 4);
-  let bytes = bb.bytes;
-  f32[0] = value;
+// function writeFloat(bb: ByteBuffer, value: number): void {
+//   let offset = grow(bb, 4);
+//   let bytes = bb.bytes;
+//   f32[0] = value;
 
-  // Manual copying is much faster than subarray+set in V8
-  bytes[offset++] = f32_u8[0];
-  bytes[offset++] = f32_u8[1];
-  bytes[offset++] = f32_u8[2];
-  bytes[offset++] = f32_u8[3];
-}
+//   // Manual copying is much faster than subarray+set in V8
+//   bytes[offset++] = f32_u8[0];
+//   bytes[offset++] = f32_u8[1];
+//   bytes[offset++] = f32_u8[2];
+//   bytes[offset++] = f32_u8[3];
+// }
 
-function readDouble(bb: ByteBuffer): number {
-  let offset = advance(bb, 8);
-  let bytes = bb.bytes;
+// function readDouble(bb: ByteBuffer): number {
+//   let offset = advance(bb, 8);
+//   let bytes = bb.bytes;
 
-  // Manual copying is much faster than subarray+set in V8
-  f64_u8[0] = bytes[offset++];
-  f64_u8[1] = bytes[offset++];
-  f64_u8[2] = bytes[offset++];
-  f64_u8[3] = bytes[offset++];
-  f64_u8[4] = bytes[offset++];
-  f64_u8[5] = bytes[offset++];
-  f64_u8[6] = bytes[offset++];
-  f64_u8[7] = bytes[offset++];
-  return f64[0];
-}
+//   // Manual copying is much faster than subarray+set in V8
+//   f64_u8[0] = bytes[offset++];
+//   f64_u8[1] = bytes[offset++];
+//   f64_u8[2] = bytes[offset++];
+//   f64_u8[3] = bytes[offset++];
+//   f64_u8[4] = bytes[offset++];
+//   f64_u8[5] = bytes[offset++];
+//   f64_u8[6] = bytes[offset++];
+//   f64_u8[7] = bytes[offset++];
+//   return f64[0];
+// }
 
-function writeDouble(bb: ByteBuffer, value: number): void {
-  let offset = grow(bb, 8);
-  let bytes = bb.bytes;
-  f64[0] = value;
+// function writeDouble(bb: ByteBuffer, value: number): void {
+//   let offset = grow(bb, 8);
+//   let bytes = bb.bytes;
+//   f64[0] = value;
 
-  // Manual copying is much faster than subarray+set in V8
-  bytes[offset++] = f64_u8[0];
-  bytes[offset++] = f64_u8[1];
-  bytes[offset++] = f64_u8[2];
-  bytes[offset++] = f64_u8[3];
-  bytes[offset++] = f64_u8[4];
-  bytes[offset++] = f64_u8[5];
-  bytes[offset++] = f64_u8[6];
-  bytes[offset++] = f64_u8[7];
-}
+//   // Manual copying is much faster than subarray+set in V8
+//   bytes[offset++] = f64_u8[0];
+//   bytes[offset++] = f64_u8[1];
+//   bytes[offset++] = f64_u8[2];
+//   bytes[offset++] = f64_u8[3];
+//   bytes[offset++] = f64_u8[4];
+//   bytes[offset++] = f64_u8[5];
+//   bytes[offset++] = f64_u8[6];
+//   bytes[offset++] = f64_u8[7];
+// }
 
-function readInt32(bb: ByteBuffer): number {
-  let offset = advance(bb, 4);
-  let bytes = bb.bytes;
-  return (
-    bytes[offset] |
-    (bytes[offset + 1] << 8) |
-    (bytes[offset + 2] << 16) |
-    (bytes[offset + 3] << 24)
-  );
-}
+// function readInt32(bb: ByteBuffer): number {
+//   let offset = advance(bb, 4);
+//   let bytes = bb.bytes;
+//   return (
+//     bytes[offset] |
+//     (bytes[offset + 1] << 8) |
+//     (bytes[offset + 2] << 16) |
+//     (bytes[offset + 3] << 24)
+//   );
+// }
 
-function writeInt32(bb: ByteBuffer, value: number): void {
-  let offset = grow(bb, 4);
-  let bytes = bb.bytes;
-  bytes[offset] = value;
-  bytes[offset + 1] = value >> 8;
-  bytes[offset + 2] = value >> 16;
-  bytes[offset + 3] = value >> 24;
-}
+// function writeInt32(bb: ByteBuffer, value: number): void {
+//   let offset = grow(bb, 4);
+//   let bytes = bb.bytes;
+//   bytes[offset] = value;
+//   bytes[offset + 1] = value >> 8;
+//   bytes[offset + 2] = value >> 16;
+//   bytes[offset + 3] = value >> 24;
+// }
 
-function readInt64(bb: ByteBuffer, unsigned: boolean): Long {
-  return {
-    low: readInt32(bb),
-    high: readInt32(bb),
-    unsigned,
-  };
-}
+// function readInt64(bb: ByteBuffer, unsigned: boolean): Long {
+//   return {
+//     low: readInt32(bb),
+//     high: readInt32(bb),
+//     unsigned,
+//   };
+// }
 
-function writeInt64(bb: ByteBuffer, value: Long): void {
-  writeInt32(bb, value.low);
-  writeInt32(bb, value.high);
-}
+// function writeInt64(bb: ByteBuffer, value: Long): void {
+//   writeInt32(bb, value.low);
+//   writeInt32(bb, value.high);
+// }
 
 function readVarint32(bb: ByteBuffer): number {
   let c = 0;
@@ -1056,40 +1056,40 @@ function writeVarint32(bb: ByteBuffer, value: number): void {
   writeByte(bb, value);
 }
 
-function readVarint64(bb: ByteBuffer, unsigned: boolean): Long {
-  let part0 = 0;
-  let part1 = 0;
-  let part2 = 0;
-  let b: number;
+// function readVarint64(bb: ByteBuffer, unsigned: boolean): Long {
+//   let part0 = 0;
+//   let part1 = 0;
+//   let part2 = 0;
+//   let b: number;
 
-  b = readByte(bb); part0 = (b & 0x7F); if (b & 0x80) {
-    b = readByte(bb); part0 |= (b & 0x7F) << 7; if (b & 0x80) {
-      b = readByte(bb); part0 |= (b & 0x7F) << 14; if (b & 0x80) {
-        b = readByte(bb); part0 |= (b & 0x7F) << 21; if (b & 0x80) {
+//   b = readByte(bb); part0 = (b & 0x7F); if (b & 0x80) {
+//     b = readByte(bb); part0 |= (b & 0x7F) << 7; if (b & 0x80) {
+//       b = readByte(bb); part0 |= (b & 0x7F) << 14; if (b & 0x80) {
+//         b = readByte(bb); part0 |= (b & 0x7F) << 21; if (b & 0x80) {
 
-          b = readByte(bb); part1 = (b & 0x7F); if (b & 0x80) {
-            b = readByte(bb); part1 |= (b & 0x7F) << 7; if (b & 0x80) {
-              b = readByte(bb); part1 |= (b & 0x7F) << 14; if (b & 0x80) {
-                b = readByte(bb); part1 |= (b & 0x7F) << 21; if (b & 0x80) {
+//           b = readByte(bb); part1 = (b & 0x7F); if (b & 0x80) {
+//             b = readByte(bb); part1 |= (b & 0x7F) << 7; if (b & 0x80) {
+//               b = readByte(bb); part1 |= (b & 0x7F) << 14; if (b & 0x80) {
+//                 b = readByte(bb); part1 |= (b & 0x7F) << 21; if (b & 0x80) {
 
-                  b = readByte(bb); part2 = (b & 0x7F); if (b & 0x80) {
-                    b = readByte(bb); part2 |= (b & 0x7F) << 7;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+//                   b = readByte(bb); part2 = (b & 0x7F); if (b & 0x80) {
+//                     b = readByte(bb); part2 |= (b & 0x7F) << 7;
+//                   }
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
 
-  return {
-    low: part0 | (part1 << 28),
-    high: (part1 >>> 4) | (part2 << 24),
-    unsigned,
-  };
-}
+//   return {
+//     low: part0 | (part1 << 28),
+//     high: (part1 >>> 4) | (part2 << 24),
+//     unsigned,
+//   };
+// }
 
 function writeVarint64(bb: ByteBuffer, value: Long): void {
   let part0 = value.low >>> 0;
@@ -1112,54 +1112,54 @@ function writeVarint64(bb: ByteBuffer, value: Long): void {
   let bytes = bb.bytes;
 
   switch (size) {
-    case 10: bytes[offset + 9] = (part2 >>> 7) & 0x01;
-    case 9: bytes[offset + 8] = size !== 9 ? part2 | 0x80 : part2 & 0x7F;
-    case 8: bytes[offset + 7] = size !== 8 ? (part1 >>> 21) | 0x80 : (part1 >>> 21) & 0x7F;
-    case 7: bytes[offset + 6] = size !== 7 ? (part1 >>> 14) | 0x80 : (part1 >>> 14) & 0x7F;
-    case 6: bytes[offset + 5] = size !== 6 ? (part1 >>> 7) | 0x80 : (part1 >>> 7) & 0x7F;
-    case 5: bytes[offset + 4] = size !== 5 ? part1 | 0x80 : part1 & 0x7F;
-    case 4: bytes[offset + 3] = size !== 4 ? (part0 >>> 21) | 0x80 : (part0 >>> 21) & 0x7F;
-    case 3: bytes[offset + 2] = size !== 3 ? (part0 >>> 14) | 0x80 : (part0 >>> 14) & 0x7F;
-    case 2: bytes[offset + 1] = size !== 2 ? (part0 >>> 7) | 0x80 : (part0 >>> 7) & 0x7F;
+    case 10: bytes[offset + 9] = (part2 >>> 7) & 0x01;break;
+    case 9: bytes[offset + 8] = size !== 9 ? part2 | 0x80 : part2 & 0x7F;break;
+    case 8: bytes[offset + 7] = size !== 8 ? (part1 >>> 21) | 0x80 : (part1 >>> 21) & 0x7F;break;
+    case 7: bytes[offset + 6] = size !== 7 ? (part1 >>> 14) | 0x80 : (part1 >>> 14) & 0x7F;break;
+    case 6: bytes[offset + 5] = size !== 6 ? (part1 >>> 7) | 0x80 : (part1 >>> 7) & 0x7F;break;
+    case 5: bytes[offset + 4] = size !== 5 ? part1 | 0x80 : part1 & 0x7F;break;
+    case 4: bytes[offset + 3] = size !== 4 ? (part0 >>> 21) | 0x80 : (part0 >>> 21) & 0x7F;break;
+    case 3: bytes[offset + 2] = size !== 3 ? (part0 >>> 14) | 0x80 : (part0 >>> 14) & 0x7F;break;
+    case 2: bytes[offset + 1] = size !== 2 ? (part0 >>> 7) | 0x80 : (part0 >>> 7) & 0x7F;break;
     case 1: bytes[offset] = size !== 1 ? part0 | 0x80 : part0 & 0x7F;
   }
 }
 
-function readVarint32ZigZag(bb: ByteBuffer): number {
-  let value = readVarint32(bb);
+// function readVarint32ZigZag(bb: ByteBuffer): number {
+//   let value = readVarint32(bb);
 
-  // ref: src/google/protobuf/wire_format_lite.h
-  return (value >>> 1) ^ -(value & 1);
-}
+//   // ref: src/google/protobuf/wire_format_lite.h
+//   return (value >>> 1) ^ -(value & 1);
+// }
 
-function writeVarint32ZigZag(bb: ByteBuffer, value: number): void {
-  // ref: src/google/protobuf/wire_format_lite.h
-  writeVarint32(bb, (value << 1) ^ (value >> 31));
-}
+// function writeVarint32ZigZag(bb: ByteBuffer, value: number): void {
+//   // ref: src/google/protobuf/wire_format_lite.h
+//   writeVarint32(bb, (value << 1) ^ (value >> 31));
+// }
 
-function readVarint64ZigZag(bb: ByteBuffer): Long {
-  let value = readVarint64(bb, /* unsigned */ false);
-  let low = value.low;
-  let high = value.high;
-  let flip = -(low & 1);
+// function readVarint64ZigZag(bb: ByteBuffer): Long {
+//   let value = readVarint64(bb, /* unsigned */ false);
+//   let low = value.low;
+//   let high = value.high;
+//   let flip = -(low & 1);
 
-  // ref: src/google/protobuf/wire_format_lite.h
-  return {
-    low: ((low >>> 1) | (high << 31)) ^ flip,
-    high: (high >>> 1) ^ flip,
-    unsigned: false,
-  };
-}
+//   // ref: src/google/protobuf/wire_format_lite.h
+//   return {
+//     low: ((low >>> 1) | (high << 31)) ^ flip,
+//     high: (high >>> 1) ^ flip,
+//     unsigned: false,
+//   };
+// }
 
-function writeVarint64ZigZag(bb: ByteBuffer, value: Long): void {
-  let low = value.low;
-  let high = value.high;
-  let flip = high >> 31;
+// function writeVarint64ZigZag(bb: ByteBuffer, value: Long): void {
+//   let low = value.low;
+//   let high = value.high;
+//   let flip = high >> 31;
 
-  // ref: src/google/protobuf/wire_format_lite.h
-  writeVarint64(bb, {
-    low: (low << 1) ^ flip,
-    high: ((high << 1) | (low >>> 31)) ^ flip,
-    unsigned: false,
-  });
-}
+//   // ref: src/google/protobuf/wire_format_lite.h
+//   writeVarint64(bb, {
+//     low: (low << 1) ^ flip,
+//     high: ((high << 1) | (low >>> 31)) ^ flip,
+//     unsigned: false,
+//   });
+// }
