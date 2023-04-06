@@ -32,6 +32,7 @@ export const decodeMessageType: { [key: number]: MessageType } = {
 };
 
 export interface EchoEvent {
+  req_id?: string;
   msg?: string;
 }
 
@@ -42,10 +43,17 @@ export function encodeEchoEvent(message: EchoEvent): Uint8Array {
 }
 
 function _encodeEchoEvent(message: EchoEvent, bb: ByteBuffer): void {
-  // optional string msg = 1;
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // optional string msg = 2;
   let $msg = message.msg;
   if ($msg !== undefined) {
-    writeVarint32(bb, 10);
+    writeVarint32(bb, 18);
     writeString(bb, $msg);
   }
 }
@@ -64,8 +72,14 @@ function _decodeEchoEvent(bb: ByteBuffer): EchoEvent {
       case 0:
         break end_of_message;
 
-      // optional string msg = 1;
+      // optional string req_id = 1;
       case 1: {
+        message.req_id = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional string msg = 2;
+      case 2: {
         message.msg = readString(bb, readVarint32(bb));
         break;
       }
@@ -79,6 +93,7 @@ function _decodeEchoEvent(bb: ByteBuffer): EchoEvent {
 }
 
 export interface ErrorEvent {
+  req_id?: string;
   code?: number;
   error?: string;
 }
@@ -90,17 +105,24 @@ export function encodeErrorEvent(message: ErrorEvent): Uint8Array {
 }
 
 function _encodeErrorEvent(message: ErrorEvent, bb: ByteBuffer): void {
-  // optional int32 code = 1;
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // optional int32 code = 2;
   let $code = message.code;
   if ($code !== undefined) {
-    writeVarint32(bb, 8);
+    writeVarint32(bb, 16);
     writeVarint64(bb, intToLong($code));
   }
 
-  // optional string error = 2;
+  // optional string error = 3;
   let $error = message.error;
   if ($error !== undefined) {
-    writeVarint32(bb, 18);
+    writeVarint32(bb, 26);
     writeString(bb, $error);
   }
 }
@@ -119,14 +141,20 @@ function _decodeErrorEvent(bb: ByteBuffer): ErrorEvent {
       case 0:
         break end_of_message;
 
-      // optional int32 code = 1;
+      // optional string req_id = 1;
       case 1: {
+        message.req_id = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional int32 code = 2;
+      case 2: {
         message.code = readVarint32(bb);
         break;
       }
 
-      // optional string error = 2;
-      case 2: {
+      // optional string error = 3;
+      case 3: {
         message.error = readString(bb, readVarint32(bb));
         break;
       }
@@ -140,6 +168,7 @@ function _decodeErrorEvent(bb: ByteBuffer): ErrorEvent {
 }
 
 export interface StatusEvent {
+  req_id?: string;
   version?: string;
 }
 
@@ -150,10 +179,17 @@ export function encodeStatusEvent(message: StatusEvent): Uint8Array {
 }
 
 function _encodeStatusEvent(message: StatusEvent, bb: ByteBuffer): void {
-  // optional string version = 1;
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // optional string version = 2;
   let $version = message.version;
   if ($version !== undefined) {
-    writeVarint32(bb, 10);
+    writeVarint32(bb, 18);
     writeString(bb, $version);
   }
 }
@@ -172,8 +208,14 @@ function _decodeStatusEvent(bb: ByteBuffer): StatusEvent {
       case 0:
         break end_of_message;
 
-      // optional string version = 1;
+      // optional string req_id = 1;
       case 1: {
+        message.req_id = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional string version = 2;
+      case 2: {
         message.version = readString(bb, readVarint32(bb));
         break;
       }
@@ -187,6 +229,7 @@ function _decodeStatusEvent(bb: ByteBuffer): StatusEvent {
 }
 
 export interface CertInfo {
+  req_id?: string;
   hash?: string;
   common_name?: string;
 }
@@ -198,17 +241,24 @@ export function encodeCertInfo(message: CertInfo): Uint8Array {
 }
 
 function _encodeCertInfo(message: CertInfo, bb: ByteBuffer): void {
-  // optional string hash = 1;
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // optional string hash = 2;
   let $hash = message.hash;
   if ($hash !== undefined) {
-    writeVarint32(bb, 10);
+    writeVarint32(bb, 18);
     writeString(bb, $hash);
   }
 
-  // optional string common_name = 2;
+  // optional string common_name = 3;
   let $common_name = message.common_name;
   if ($common_name !== undefined) {
-    writeVarint32(bb, 18);
+    writeVarint32(bb, 26);
     writeString(bb, $common_name);
   }
 }
@@ -227,148 +277,9 @@ function _decodeCertInfo(bb: ByteBuffer): CertInfo {
       case 0:
         break end_of_message;
 
-      // optional string hash = 1;
+      // optional string req_id = 1;
       case 1: {
-        message.hash = readString(bb, readVarint32(bb));
-        break;
-      }
-
-      // optional string common_name = 2;
-      case 2: {
-        message.common_name = readString(bb, readVarint32(bb));
-        break;
-      }
-
-      default:
-        skipUnknownField(bb, tag & 7);
-    }
-  }
-
-  return message;
-}
-
-export interface CertListEvent {
-  certs?: CertInfo[];
-  count?: number;
-}
-
-export function encodeCertListEvent(message: CertListEvent): Uint8Array {
-  let bb = popByteBuffer();
-  _encodeCertListEvent(message, bb);
-  return toUint8Array(bb);
-}
-
-function _encodeCertListEvent(message: CertListEvent, bb: ByteBuffer): void {
-  // repeated CertInfo certs = 1;
-  let array$certs = message.certs;
-  if (array$certs !== undefined) {
-    for (let value of array$certs) {
-      writeVarint32(bb, 10);
-      let nested = popByteBuffer();
-      _encodeCertInfo(value, nested);
-      writeVarint32(bb, nested.limit);
-      writeByteBuffer(bb, nested);
-      pushByteBuffer(nested);
-    }
-  }
-
-  // optional int32 count = 2;
-  let $count = message.count;
-  if ($count !== undefined) {
-    writeVarint32(bb, 16);
-    writeVarint64(bb, intToLong($count));
-  }
-}
-
-export function decodeCertListEvent(binary: Uint8Array): CertListEvent {
-  return _decodeCertListEvent(wrapByteBuffer(binary));
-}
-
-function _decodeCertListEvent(bb: ByteBuffer): CertListEvent {
-  let message: CertListEvent = {} as any;
-
-  end_of_message: while (!isAtEnd(bb)) {
-    let tag = readVarint32(bb);
-
-    switch (tag >>> 3) {
-      case 0:
-        break end_of_message;
-
-      // repeated CertInfo certs = 1;
-      case 1: {
-        let limit = pushTemporaryLength(bb);
-        let values = message.certs || (message.certs = []);
-        values.push(_decodeCertInfo(bb));
-        bb.limit = limit;
-        break;
-      }
-
-      // optional int32 count = 2;
-      case 2: {
-        message.count = readVarint32(bb);
-        break;
-      }
-
-      default:
-        skipUnknownField(bb, tag & 7);
-    }
-  }
-
-  return message;
-}
-
-export interface CertDetailEvent {
-  raw?: Uint8Array;
-  hash?: string;
-  common_name?: string;
-}
-
-export function encodeCertDetailEvent(message: CertDetailEvent): Uint8Array {
-  let bb = popByteBuffer();
-  _encodeCertDetailEvent(message, bb);
-  return toUint8Array(bb);
-}
-
-function _encodeCertDetailEvent(message: CertDetailEvent, bb: ByteBuffer): void {
-  // optional bytes raw = 1;
-  let $raw = message.raw;
-  if ($raw !== undefined) {
-    writeVarint32(bb, 10);
-    writeVarint32(bb, $raw.length), writeBytes(bb, $raw);
-  }
-
-  // optional string hash = 2;
-  let $hash = message.hash;
-  if ($hash !== undefined) {
-    writeVarint32(bb, 18);
-    writeString(bb, $hash);
-  }
-
-  // optional string common_name = 3;
-  let $common_name = message.common_name;
-  if ($common_name !== undefined) {
-    writeVarint32(bb, 26);
-    writeString(bb, $common_name);
-  }
-}
-
-export function decodeCertDetailEvent(binary: Uint8Array): CertDetailEvent {
-  return _decodeCertDetailEvent(wrapByteBuffer(binary));
-}
-
-function _decodeCertDetailEvent(bb: ByteBuffer): CertDetailEvent {
-  let message: CertDetailEvent = {} as any;
-
-  end_of_message: while (!isAtEnd(bb)) {
-    let tag = readVarint32(bb);
-
-    switch (tag >>> 3) {
-      case 0:
-        break end_of_message;
-
-      // optional bytes raw = 1;
-      case 1: {
-        message.raw = readBytes(bb, readVarint32(bb));
+        message.req_id = readString(bb, readVarint32(bb));
         break;
       }
 
@@ -392,7 +303,184 @@ function _decodeCertDetailEvent(bb: ByteBuffer): CertDetailEvent {
   return message;
 }
 
+export interface CertListEvent {
+  req_id?: string;
+  certs?: CertInfo[];
+  count?: number;
+}
+
+export function encodeCertListEvent(message: CertListEvent): Uint8Array {
+  let bb = popByteBuffer();
+  _encodeCertListEvent(message, bb);
+  return toUint8Array(bb);
+}
+
+function _encodeCertListEvent(message: CertListEvent, bb: ByteBuffer): void {
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // repeated CertInfo certs = 2;
+  let array$certs = message.certs;
+  if (array$certs !== undefined) {
+    for (let value of array$certs) {
+      writeVarint32(bb, 18);
+      let nested = popByteBuffer();
+      _encodeCertInfo(value, nested);
+      writeVarint32(bb, nested.limit);
+      writeByteBuffer(bb, nested);
+      pushByteBuffer(nested);
+    }
+  }
+
+  // optional int32 count = 3;
+  let $count = message.count;
+  if ($count !== undefined) {
+    writeVarint32(bb, 24);
+    writeVarint64(bb, intToLong($count));
+  }
+}
+
+export function decodeCertListEvent(binary: Uint8Array): CertListEvent {
+  return _decodeCertListEvent(wrapByteBuffer(binary));
+}
+
+function _decodeCertListEvent(bb: ByteBuffer): CertListEvent {
+  let message: CertListEvent = {} as any;
+
+  end_of_message: while (!isAtEnd(bb)) {
+    let tag = readVarint32(bb);
+
+    switch (tag >>> 3) {
+      case 0:
+        break end_of_message;
+
+      // optional string req_id = 1;
+      case 1: {
+        message.req_id = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // repeated CertInfo certs = 2;
+      case 2: {
+        let limit = pushTemporaryLength(bb);
+        let values = message.certs || (message.certs = []);
+        values.push(_decodeCertInfo(bb));
+        bb.limit = limit;
+        break;
+      }
+
+      // optional int32 count = 3;
+      case 3: {
+        message.count = readVarint32(bb);
+        break;
+      }
+
+      default:
+        skipUnknownField(bb, tag & 7);
+    }
+  }
+
+  return message;
+}
+
+export interface CertDetailEvent {
+  req_id?: string;
+  raw?: Uint8Array;
+  hash?: string;
+  common_name?: string;
+}
+
+export function encodeCertDetailEvent(message: CertDetailEvent): Uint8Array {
+  let bb = popByteBuffer();
+  _encodeCertDetailEvent(message, bb);
+  return toUint8Array(bb);
+}
+
+function _encodeCertDetailEvent(
+  message: CertDetailEvent,
+  bb: ByteBuffer
+): void {
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // optional bytes raw = 2;
+  let $raw = message.raw;
+  if ($raw !== undefined) {
+    writeVarint32(bb, 18);
+    writeVarint32(bb, $raw.length), writeBytes(bb, $raw);
+  }
+
+  // optional string hash = 3;
+  let $hash = message.hash;
+  if ($hash !== undefined) {
+    writeVarint32(bb, 26);
+    writeString(bb, $hash);
+  }
+
+  // optional string common_name = 4;
+  let $common_name = message.common_name;
+  if ($common_name !== undefined) {
+    writeVarint32(bb, 34);
+    writeString(bb, $common_name);
+  }
+}
+
+export function decodeCertDetailEvent(binary: Uint8Array): CertDetailEvent {
+  return _decodeCertDetailEvent(wrapByteBuffer(binary));
+}
+
+function _decodeCertDetailEvent(bb: ByteBuffer): CertDetailEvent {
+  let message: CertDetailEvent = {} as any;
+
+  end_of_message: while (!isAtEnd(bb)) {
+    let tag = readVarint32(bb);
+
+    switch (tag >>> 3) {
+      case 0:
+        break end_of_message;
+
+      // optional string req_id = 1;
+      case 1: {
+        message.req_id = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional bytes raw = 2;
+      case 2: {
+        message.raw = readBytes(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional string hash = 3;
+      case 3: {
+        message.hash = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional string common_name = 4;
+      case 4: {
+        message.common_name = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      default:
+        skipUnknownField(bb, tag & 7);
+    }
+  }
+
+  return message;
+}
+
 export interface EmailInfoEvent {
+  req_id?: string;
   body?: Uint8Array;
   signed?: boolean;
   encrypted?: boolean;
@@ -408,31 +496,38 @@ export function encodeEmailInfoEvent(message: EmailInfoEvent): Uint8Array {
 }
 
 function _encodeEmailInfoEvent(message: EmailInfoEvent, bb: ByteBuffer): void {
-  // optional bytes body = 1;
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // optional bytes body = 2;
   let $body = message.body;
   if ($body !== undefined) {
-    writeVarint32(bb, 10);
+    writeVarint32(bb, 18);
     writeVarint32(bb, $body.length), writeBytes(bb, $body);
   }
 
-  // optional bool signed = 2;
+  // optional bool signed = 3;
   let $signed = message.signed;
   if ($signed !== undefined) {
-    writeVarint32(bb, 16);
+    writeVarint32(bb, 24);
     writeByte(bb, $signed ? 1 : 0);
   }
 
-  // optional bool encrypted = 3;
+  // optional bool encrypted = 4;
   let $encrypted = message.encrypted;
   if ($encrypted !== undefined) {
-    writeVarint32(bb, 24);
+    writeVarint32(bb, 32);
     writeByte(bb, $encrypted ? 1 : 0);
   }
 
-  // optional CertInfo cert = 4;
+  // optional CertInfo cert = 5;
   let $cert = message.cert;
   if ($cert !== undefined) {
-    writeVarint32(bb, 34);
+    writeVarint32(bb, 42);
     let nested = popByteBuffer();
     _encodeCertInfo($cert, nested);
     writeVarint32(bb, nested.limit);
@@ -440,17 +535,17 @@ function _encodeEmailInfoEvent(message: EmailInfoEvent, bb: ByteBuffer): void {
     pushByteBuffer(nested);
   }
 
-  // optional string error = 5;
+  // optional string error = 6;
   let $error = message.error;
   if ($error !== undefined) {
-    writeVarint32(bb, 42);
+    writeVarint32(bb, 50);
     writeString(bb, $error);
   }
 
-  // optional string reason = 6;
+  // optional string reason = 7;
   let $reason = message.reason;
   if ($reason !== undefined) {
-    writeVarint32(bb, 50);
+    writeVarint32(bb, 58);
     writeString(bb, $reason);
   }
 }
@@ -469,40 +564,46 @@ function _decodeEmailInfoEvent(bb: ByteBuffer): EmailInfoEvent {
       case 0:
         break end_of_message;
 
-      // optional bytes body = 1;
+      // optional string req_id = 1;
       case 1: {
+        message.req_id = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional bytes body = 2;
+      case 2: {
         message.body = readBytes(bb, readVarint32(bb));
         break;
       }
 
-      // optional bool signed = 2;
-      case 2: {
+      // optional bool signed = 3;
+      case 3: {
         message.signed = !!readByte(bb);
         break;
       }
 
-      // optional bool encrypted = 3;
-      case 3: {
+      // optional bool encrypted = 4;
+      case 4: {
         message.encrypted = !!readByte(bb);
         break;
       }
 
-      // optional CertInfo cert = 4;
-      case 4: {
+      // optional CertInfo cert = 5;
+      case 5: {
         let limit = pushTemporaryLength(bb);
         message.cert = _decodeCertInfo(bb);
         bb.limit = limit;
         break;
       }
 
-      // optional string error = 5;
-      case 5: {
+      // optional string error = 6;
+      case 6: {
         message.error = readString(bb, readVarint32(bb));
         break;
       }
 
-      // optional string reason = 6;
-      case 6: {
+      // optional string reason = 7;
+      case 7: {
         message.reason = readString(bb, readVarint32(bb));
         break;
       }
@@ -516,6 +617,7 @@ function _decodeEmailInfoEvent(bb: ByteBuffer): EmailInfoEvent {
 }
 
 export interface SignEmailEvent {
+  req_id?: string;
   body?: Uint8Array;
   attachments?: string[];
   cert_hash?: string;
@@ -528,26 +630,33 @@ export function encodeSignEmailEvent(message: SignEmailEvent): Uint8Array {
 }
 
 function _encodeSignEmailEvent(message: SignEmailEvent, bb: ByteBuffer): void {
-  // optional bytes body = 1;
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // optional bytes body = 2;
   let $body = message.body;
   if ($body !== undefined) {
-    writeVarint32(bb, 10);
+    writeVarint32(bb, 18);
     writeVarint32(bb, $body.length), writeBytes(bb, $body);
   }
 
-  // repeated string attachments = 2;
+  // repeated string attachments = 3;
   let array$attachments = message.attachments;
   if (array$attachments !== undefined) {
     for (let value of array$attachments) {
-      writeVarint32(bb, 18);
+      writeVarint32(bb, 26);
       writeString(bb, value);
     }
   }
 
-  // optional string cert_hash = 3;
+  // optional string cert_hash = 4;
   let $cert_hash = message.cert_hash;
   if ($cert_hash !== undefined) {
-    writeVarint32(bb, 26);
+    writeVarint32(bb, 34);
     writeString(bb, $cert_hash);
   }
 }
@@ -566,21 +675,27 @@ function _decodeSignEmailEvent(bb: ByteBuffer): SignEmailEvent {
       case 0:
         break end_of_message;
 
-      // optional bytes body = 1;
+      // optional string req_id = 1;
       case 1: {
+        message.req_id = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional bytes body = 2;
+      case 2: {
         message.body = readBytes(bb, readVarint32(bb));
         break;
       }
 
-      // repeated string attachments = 2;
-      case 2: {
+      // repeated string attachments = 3;
+      case 3: {
         let values = message.attachments || (message.attachments = []);
         values.push(readString(bb, readVarint32(bb)));
         break;
       }
 
-      // optional string cert_hash = 3;
-      case 3: {
+      // optional string cert_hash = 4;
+      case 4: {
         message.cert_hash = readString(bb, readVarint32(bb));
         break;
       }
@@ -594,38 +709,51 @@ function _decodeSignEmailEvent(bb: ByteBuffer): SignEmailEvent {
 }
 
 export interface EncryptEmailEvent {
+  req_id?: string;
   body?: Uint8Array;
   attachments?: string[];
   cert_hash?: string;
 }
 
-export function encodeEncryptEmailEvent(message: EncryptEmailEvent): Uint8Array {
+export function encodeEncryptEmailEvent(
+  message: EncryptEmailEvent
+): Uint8Array {
   let bb = popByteBuffer();
   _encodeEncryptEmailEvent(message, bb);
   return toUint8Array(bb);
 }
 
-function _encodeEncryptEmailEvent(message: EncryptEmailEvent, bb: ByteBuffer): void {
-  // optional bytes body = 1;
+function _encodeEncryptEmailEvent(
+  message: EncryptEmailEvent,
+  bb: ByteBuffer
+): void {
+  // optional string req_id = 1;
+  let $req_id = message.req_id;
+  if ($req_id !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $req_id);
+  }
+
+  // optional bytes body = 2;
   let $body = message.body;
   if ($body !== undefined) {
-    writeVarint32(bb, 10);
+    writeVarint32(bb, 18);
     writeVarint32(bb, $body.length), writeBytes(bb, $body);
   }
 
-  // repeated string attachments = 2;
+  // repeated string attachments = 3;
   let array$attachments = message.attachments;
   if (array$attachments !== undefined) {
     for (let value of array$attachments) {
-      writeVarint32(bb, 18);
+      writeVarint32(bb, 26);
       writeString(bb, value);
     }
   }
 
-  // optional string cert_hash = 3;
+  // optional string cert_hash = 4;
   let $cert_hash = message.cert_hash;
   if ($cert_hash !== undefined) {
-    writeVarint32(bb, 26);
+    writeVarint32(bb, 34);
     writeString(bb, $cert_hash);
   }
 }
@@ -644,21 +772,27 @@ function _decodeEncryptEmailEvent(bb: ByteBuffer): EncryptEmailEvent {
       case 0:
         break end_of_message;
 
-      // optional bytes body = 1;
+      // optional string req_id = 1;
       case 1: {
+        message.req_id = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional bytes body = 2;
+      case 2: {
         message.body = readBytes(bb, readVarint32(bb));
         break;
       }
 
-      // repeated string attachments = 2;
-      case 2: {
+      // repeated string attachments = 3;
+      case 3: {
         let values = message.attachments || (message.attachments = []);
         values.push(readString(bb, readVarint32(bb)));
         break;
       }
 
-      // optional string cert_hash = 3;
-      case 3: {
+      // optional string cert_hash = 4;
+      case 4: {
         message.cert_hash = readString(bb, readVarint32(bb));
         break;
       }
@@ -692,11 +826,20 @@ function pushTemporaryLength(bb: ByteBuffer): number {
 
 function skipUnknownField(bb: ByteBuffer, type: number): void {
   switch (type) {
-    case 0: while (readByte(bb) & 0x80) { } break;
-    case 2: skip(bb, readVarint32(bb)); break;
-    case 5: skip(bb, 4); break;
-    case 1: skip(bb, 8); break;
-    default: throw new Error("Unimplemented type: " + type);
+    case 0:
+      while (readByte(bb) & 0x80) {}
+      break;
+    case 2:
+      skip(bb, readVarint32(bb));
+      break;
+    case 5:
+      skip(bb, 4);
+      break;
+    case 1:
+      skip(bb, 8);
+      break;
+    default:
+      throw new Error("Unimplemented type: " + type);
   }
 }
 
@@ -761,7 +904,7 @@ function toUint8Array(bb: ByteBuffer): Uint8Array {
 
 function skip(bb: ByteBuffer, offset: number): void {
   if (bb.offset + offset > bb.limit) {
-    throw new Error('Skip past limit');
+    throw new Error("Skip past limit");
   }
   bb.offset += offset;
 }
@@ -790,7 +933,7 @@ function grow(bb: ByteBuffer, count: number): number {
 function advance(bb: ByteBuffer, count: number): number {
   let offset = bb.offset;
   if (offset + count > bb.limit) {
-    throw new Error('Read past limit');
+    throw new Error("Read past limit");
   }
   bb.offset += count;
   return offset;
@@ -811,11 +954,15 @@ function readString(bb: ByteBuffer, count: number): string {
   let offset = advance(bb, count);
   let fromCharCode = String.fromCharCode;
   let bytes = bb.bytes;
-  let invalid = '\uFFFD';
-  let text = '';
+  let invalid = "\uFFFD";
+  let text = "";
 
   for (let i = 0; i < count; i++) {
-    let c1 = bytes[i + offset], c2: number, c3: number, c4: number, c: number;
+    let c1 = bytes[i + offset],
+      c2: number,
+      c3: number,
+      c4: number,
+      c: number;
 
     // 1 byte
     if ((c1 & 0x80) === 0) {
@@ -823,13 +970,13 @@ function readString(bb: ByteBuffer, count: number): string {
     }
 
     // 2 bytes
-    else if ((c1 & 0xE0) === 0xC0) {
+    else if ((c1 & 0xe0) === 0xc0) {
       if (i + 1 >= count) text += invalid;
       else {
         c2 = bytes[i + offset + 1];
-        if ((c2 & 0xC0) !== 0x80) text += invalid;
+        if ((c2 & 0xc0) !== 0x80) text += invalid;
         else {
-          c = ((c1 & 0x1F) << 6) | (c2 & 0x3F);
+          c = ((c1 & 0x1f) << 6) | (c2 & 0x3f);
           if (c < 0x80) text += invalid;
           else {
             text += fromCharCode(c);
@@ -840,15 +987,15 @@ function readString(bb: ByteBuffer, count: number): string {
     }
 
     // 3 bytes
-    else if ((c1 & 0xF0) == 0xE0) {
+    else if ((c1 & 0xf0) == 0xe0) {
       if (i + 2 >= count) text += invalid;
       else {
         c2 = bytes[i + offset + 1];
         c3 = bytes[i + offset + 2];
-        if (((c2 | (c3 << 8)) & 0xC0C0) !== 0x8080) text += invalid;
+        if (((c2 | (c3 << 8)) & 0xc0c0) !== 0x8080) text += invalid;
         else {
-          c = ((c1 & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
-          if (c < 0x0800 || (c >= 0xD800 && c <= 0xDFFF)) text += invalid;
+          c = ((c1 & 0x0f) << 12) | ((c2 & 0x3f) << 6) | (c3 & 0x3f);
+          if (c < 0x0800 || (c >= 0xd800 && c <= 0xdfff)) text += invalid;
           else {
             text += fromCharCode(c);
             i += 2;
@@ -858,26 +1005,29 @@ function readString(bb: ByteBuffer, count: number): string {
     }
 
     // 4 bytes
-    else if ((c1 & 0xF8) == 0xF0) {
+    else if ((c1 & 0xf8) == 0xf0) {
       if (i + 3 >= count) text += invalid;
       else {
         c2 = bytes[i + offset + 1];
         c3 = bytes[i + offset + 2];
         c4 = bytes[i + offset + 3];
-        if (((c2 | (c3 << 8) | (c4 << 16)) & 0xC0C0C0) !== 0x808080) text += invalid;
+        if (((c2 | (c3 << 8) | (c4 << 16)) & 0xc0c0c0) !== 0x808080)
+          text += invalid;
         else {
-          c = ((c1 & 0x07) << 0x12) | ((c2 & 0x3F) << 0x0C) | ((c3 & 0x3F) << 0x06) | (c4 & 0x3F);
-          if (c < 0x10000 || c > 0x10FFFF) text += invalid;
+          c =
+            ((c1 & 0x07) << 0x12) |
+            ((c2 & 0x3f) << 0x0c) |
+            ((c3 & 0x3f) << 0x06) |
+            (c4 & 0x3f);
+          if (c < 0x10000 || c > 0x10ffff) text += invalid;
           else {
             c -= 0x10000;
-            text += fromCharCode((c >> 10) + 0xD800, (c & 0x3FF) + 0xDC00);
+            text += fromCharCode((c >> 10) + 0xd800, (c & 0x3ff) + 0xdc00);
             i += 3;
           }
         }
       }
-    }
-
-    else text += invalid;
+    } else text += invalid;
   }
 
   return text;
@@ -891,8 +1041,8 @@ function writeString(bb: ByteBuffer, text: string): void {
   // Write the byte count first
   for (let i = 0; i < n; i++) {
     let c = text.charCodeAt(i);
-    if (c >= 0xD800 && c <= 0xDBFF && i + 1 < n) {
-      c = (c << 10) + text.charCodeAt(++i) - 0x35FDC00;
+    if (c >= 0xd800 && c <= 0xdbff && i + 1 < n) {
+      c = (c << 10) + text.charCodeAt(++i) - 0x35fdc00;
     }
     byteCount += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
   }
@@ -904,24 +1054,24 @@ function writeString(bb: ByteBuffer, text: string): void {
   // Then write the bytes
   for (let i = 0; i < n; i++) {
     let c = text.charCodeAt(i);
-    if (c >= 0xD800 && c <= 0xDBFF && i + 1 < n) {
-      c = (c << 10) + text.charCodeAt(++i) - 0x35FDC00;
+    if (c >= 0xd800 && c <= 0xdbff && i + 1 < n) {
+      c = (c << 10) + text.charCodeAt(++i) - 0x35fdc00;
     }
     if (c < 0x80) {
       bytes[offset++] = c;
     } else {
       if (c < 0x800) {
-        bytes[offset++] = ((c >> 6) & 0x1F) | 0xC0;
+        bytes[offset++] = ((c >> 6) & 0x1f) | 0xc0;
       } else {
         if (c < 0x10000) {
-          bytes[offset++] = ((c >> 12) & 0x0F) | 0xE0;
+          bytes[offset++] = ((c >> 12) & 0x0f) | 0xe0;
         } else {
-          bytes[offset++] = ((c >> 18) & 0x07) | 0xF0;
-          bytes[offset++] = ((c >> 12) & 0x3F) | 0x80;
+          bytes[offset++] = ((c >> 18) & 0x07) | 0xf0;
+          bytes[offset++] = ((c >> 12) & 0x3f) | 0x80;
         }
-        bytes[offset++] = ((c >> 6) & 0x3F) | 0x80;
+        bytes[offset++] = ((c >> 6) & 0x3f) | 0x80;
       }
-      bytes[offset++] = (c & 0x3F) | 0x80;
+      bytes[offset++] = (c & 0x3f) | 0x80;
     }
   }
 }
@@ -1041,7 +1191,7 @@ function readVarint32(bb: ByteBuffer): number {
   let b: number;
   do {
     b = readByte(bb);
-    if (c < 32) value |= (b & 0x7F) << c;
+    if (c < 32) value |= (b & 0x7f) << c;
     c += 7;
   } while (b & 0x80);
   return value;
@@ -1098,30 +1248,65 @@ function writeVarint64(bb: ByteBuffer, value: Long): void {
 
   // ref: src/google/protobuf/io/coded_stream.cc
   let size =
-    part2 === 0 ?
-      part1 === 0 ?
-        part0 < 1 << 14 ?
-          part0 < 1 << 7 ? 1 : 2 :
-          part0 < 1 << 21 ? 3 : 4 :
-        part1 < 1 << 14 ?
-          part1 < 1 << 7 ? 5 : 6 :
-          part1 < 1 << 21 ? 7 : 8 :
-      part2 < 1 << 7 ? 9 : 10;
+    part2 === 0
+      ? part1 === 0
+        ? part0 < 1 << 14
+          ? part0 < 1 << 7
+            ? 1
+            : 2
+          : part0 < 1 << 21
+          ? 3
+          : 4
+        : part1 < 1 << 14
+        ? part1 < 1 << 7
+          ? 5
+          : 6
+        : part1 < 1 << 21
+        ? 7
+        : 8
+      : part2 < 1 << 7
+      ? 9
+      : 10;
 
   let offset = grow(bb, size);
   let bytes = bb.bytes;
 
   switch (size) {
-    case 10: bytes[offset + 9] = (part2 >>> 7) & 0x01;break;
-    case 9: bytes[offset + 8] = size !== 9 ? part2 | 0x80 : part2 & 0x7F;break;
-    case 8: bytes[offset + 7] = size !== 8 ? (part1 >>> 21) | 0x80 : (part1 >>> 21) & 0x7F;break;
-    case 7: bytes[offset + 6] = size !== 7 ? (part1 >>> 14) | 0x80 : (part1 >>> 14) & 0x7F;break;
-    case 6: bytes[offset + 5] = size !== 6 ? (part1 >>> 7) | 0x80 : (part1 >>> 7) & 0x7F;break;
-    case 5: bytes[offset + 4] = size !== 5 ? part1 | 0x80 : part1 & 0x7F;break;
-    case 4: bytes[offset + 3] = size !== 4 ? (part0 >>> 21) | 0x80 : (part0 >>> 21) & 0x7F;break;
-    case 3: bytes[offset + 2] = size !== 3 ? (part0 >>> 14) | 0x80 : (part0 >>> 14) & 0x7F;break;
-    case 2: bytes[offset + 1] = size !== 2 ? (part0 >>> 7) | 0x80 : (part0 >>> 7) & 0x7F;break;
-    case 1: bytes[offset] = size !== 1 ? part0 | 0x80 : part0 & 0x7F;
+    case 10:
+      bytes[offset + 9] = (part2 >>> 7) & 0x01;
+      break;
+    case 9:
+      bytes[offset + 8] = size !== 9 ? part2 | 0x80 : part2 & 0x7f;
+      break;
+    case 8:
+      bytes[offset + 7] =
+        size !== 8 ? (part1 >>> 21) | 0x80 : (part1 >>> 21) & 0x7f;
+      break;
+    case 7:
+      bytes[offset + 6] =
+        size !== 7 ? (part1 >>> 14) | 0x80 : (part1 >>> 14) & 0x7f;
+      break;
+    case 6:
+      bytes[offset + 5] =
+        size !== 6 ? (part1 >>> 7) | 0x80 : (part1 >>> 7) & 0x7f;
+      break;
+    case 5:
+      bytes[offset + 4] = size !== 5 ? part1 | 0x80 : part1 & 0x7f;
+      break;
+    case 4:
+      bytes[offset + 3] =
+        size !== 4 ? (part0 >>> 21) | 0x80 : (part0 >>> 21) & 0x7f;
+      break;
+    case 3:
+      bytes[offset + 2] =
+        size !== 3 ? (part0 >>> 14) | 0x80 : (part0 >>> 14) & 0x7f;
+      break;
+    case 2:
+      bytes[offset + 1] =
+        size !== 2 ? (part0 >>> 7) | 0x80 : (part0 >>> 7) & 0x7f;
+      break;
+    case 1:
+      bytes[offset] = size !== 1 ? part0 | 0x80 : part0 & 0x7f;
   }
 }
 

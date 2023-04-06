@@ -1,30 +1,64 @@
 <html>
   <head>
     <script src="../build/browser/index.min.js"></script>
+    <input type="file" id="file-input" />
   </head>
   <body>
     <script>
       function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
-      var km;
-      try {
-        km = new TrustAsia.KeyManager("ws://localhost:8878/smime/wb");
-      } catch (error) {
-        console.log(error);
-      }
+      const fileInput = document.getElementById("file-input");
+      let uint8Array;
+      fileInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
 
-      async function sendMessage() {
-        for (let i = 0; i < 10; i++) {
-          await sleep(1000);
-          try {
-            km.echoEvent({msg: 'hello world!'});
-          } catch (error) {
-            console.log(error);
-          }
+        reader.addEventListener("load", (event) => {
+          const fileContents = event.target.result;
+          // 这里是文件内容，可以进行处理
+          uint8Array = new Uint8Array(fileContents);
+        });
+
+        reader.readAsArrayBuffer(file);
+      });
+
+      // 初始化km
+      const km = new TrustAsia.KeyManager("ws://localhost:8878/smime/wb");
+      // 发送echo
+      async function testEvent() {
+        // 等待ws
+        console.log("等待10s，选择验证签名的邮件");
+        await sleep(10000);
+
+        // echo测试
+        const echo = await km.echoEvent({ msg: "Hello world!" });
+        console.log("echo=", echo);
+        // 获取证书列表
+        const list = await km.certListEvent({});
+        console.log("certList=", list);
+        // 邮件信息：验证结果/解密结果
+        const ok = await km.emailInfoEvent({ body: uint8Array });
+        if (ok.signed) {
+          console.log("已签名");
         }
+        if (ok.error) {
+          console.log(ok.error);
+        } else {
+          console.log("验证成功");
+        }
+        console.log(ok);
+        // 签名邮件
+        const result = await km.signEmailEvent({
+          cert_hash: "72f9b46d8c362b832af7b86befa98fff4e702218",
+          body: new TextEncoder().encode('这是正文内容'),
+        });
+        console.log(result);
+        const decoder = new TextDecoder();
+        const body = decoder.decode(result.body);
+        console.log(body);
       }
-      sendMessage();
+      testEvent();
     </script>
   </body>
 </html>

@@ -3,6 +3,7 @@ import * as pb from "./pb";
 export class KeyManager {
   socket: WebSocket;
   alive: boolean;
+  emitter: EventEmitter;
 
   constructor(endpoint: string) {
     const socket = new WebSocket(endpoint);
@@ -13,6 +14,7 @@ export class KeyManager {
 
     this.alive = false;
     this.socket = socket;
+    this.emitter = new EventEmitter();
   }
 
   // websocket event handler
@@ -25,25 +27,57 @@ export class KeyManager {
     this.alive = false;
   }
   onSocketMessage(event: MessageEvent) {
-    console.log("received a message");
-
     const obj = this.unmarshalProto(event.data);
-    console.log(obj);
+    console.log("received a message: ", obj);
+    this.emitter.emit(obj.req_id, obj);
   }
   // export functions
-  echoEvent(e: pb.EchoEvent) {
-    const reqID = this.getReqID();
-    console.log(reqID);
-    this.send(pb.MessageType.Echo, e);
+  async echoEvent(e: pb.EchoEvent): Promise<pb.EchoEvent> {
+    return this.promiseEvent(pb.MessageType.Echo, e);
+  }
+  async errorEvent(e: pb.ErrorEvent): Promise<pb.ErrorEvent> {
+    return this.promiseEvent(pb.MessageType.Error, e);
+  }
+  async statusEvent(e: pb.StatusEvent): Promise<pb.StatusEvent> {
+    return this.promiseEvent(pb.MessageType.Status, e);
+  }
+  async certListEvent(e: pb.CertListEvent): Promise<pb.CertListEvent> {
+    return this.promiseEvent(pb.MessageType.CertList, e);
+  }
+  async emailInfoEvent(e: pb.EmailInfoEvent): Promise<pb.EmailInfoEvent> {
+    return this.promiseEvent(pb.MessageType.EmailInfo, e);
+  }
+  async signEmailEvent(e: pb.SignEmailEvent): Promise<pb.SignEmailEvent> {
+    return this.promiseEvent(pb.MessageType.SignEmail, e);
+  }
+  async encryptEmailEvent(
+    e: pb.EncryptEmailEvent
+  ): Promise<pb.EncryptEmailEvent> {
+    return this.promiseEvent(pb.MessageType.EncryptEmail, e);
   }
 
-  // request id
-  private getReqID(): number {
-    return Date.now();
+  // promise event
+  async promiseEvent(mt: pb.MessageType, e: any): Promise<any> {
+    e.req_id = Date.now().toString(10);
+
+    return new Promise((resolve, reject) => {
+      this.send(mt, e);
+
+      const timeoutID = setTimeout(() => {
+        this.emitter.rm(e.req_id);
+      }, 12 * 1000);
+      this.emitter.on(
+        e.req_id,
+        (data) => {
+          resolve(data);
+          clearTimeout(timeoutID);
+        },
+        reject
+      );
+    });
   }
   // send message
   private send(mt: pb.MessageType, obj: object) {
-    console.log("send: ", mt, this.alive);
     if (!this.alive) {
       throw Error("Websocket connection not alive");
     }
@@ -97,5 +131,33 @@ export class KeyManager {
     result.set(mType, 0);
     result.set(data, 4);
     this.socket.send(result);
+  }
+}
+
+class EventEmitter {
+  private callbacks: Record<string, ((...args: any[]) => any)[]>;
+
+  constructor() {
+    this.callbacks = {};
+  }
+
+  on(event: string, cb: (data: any) => any, cb2: (data: any) => any) {
+    if (!this.callbacks[event]) this.callbacks[event] = [];
+    this.callbacks[event].push(cb, cb2);
+  }
+
+  emit(event: string, data: any) {
+    let cbs = this.callbacks[event];
+    if (cbs) {
+      cbs[0](data);
+    }
+  }
+
+  rm(event: string) {
+    let cbs = this.callbacks[event];
+    if (cbs) {
+      delete this.callbacks[event];
+      cbs[1]("Timeout");
+    }
   }
 }
