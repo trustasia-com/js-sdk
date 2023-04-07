@@ -29,45 +29,45 @@ export class KeyManager {
   onSocketMessage(event: MessageEvent) {
     const obj = this.unmarshalProto(event.data);
     console.log("received a message: ", obj);
-    this.emitter.emit(obj.req_id, obj);
+    this.emitter.emit(obj.reqId, obj);
   }
   // export functions
   async echoEvent(e: pb.EchoEvent): Promise<pb.EchoEvent> {
-    return this.promiseEvent(pb.MessageType.Echo, e);
+    return this.promiseEvent(pb.EventType.Echo, e);
   }
   async errorEvent(e: pb.ErrorEvent): Promise<pb.ErrorEvent> {
-    return this.promiseEvent(pb.MessageType.Error, e);
+    return this.promiseEvent(pb.EventType.Error, e);
   }
-  async statusEvent(e: pb.StatusEvent): Promise<pb.StatusEvent> {
-    return this.promiseEvent(pb.MessageType.Status, e);
+  async statusEvent(e: pb.StatusEventReq): Promise<pb.StatusEventResp> {
+    return this.promiseEvent(pb.EventType.Status, e);
   }
-  async certListEvent(e: pb.CertListEvent): Promise<pb.CertListEvent> {
-    return this.promiseEvent(pb.MessageType.CertList, e);
+  async certListEvent(e: pb.CertListEventReq): Promise<pb.CertListEventResp> {
+    return this.promiseEvent(pb.EventType.CertList, e);
   }
-  async emailInfoEvent(e: pb.EmailInfoEvent): Promise<pb.EmailInfoEvent> {
-    return this.promiseEvent(pb.MessageType.EmailInfo, e);
+  async emailInfoEvent(e: pb.EmailInfoEventReq): Promise<pb.EmailInfoEventResp> {
+    return this.promiseEvent(pb.EventType.EmailInfo, e);
   }
-  async signEmailEvent(e: pb.SignEmailEvent): Promise<pb.SignEmailEvent> {
-    return this.promiseEvent(pb.MessageType.SignEmail, e);
+  async signEmailEvent(e: pb.SignEmailEventReq): Promise<pb.SignEmailEventResp> {
+    return this.promiseEvent(pb.EventType.SignEmail, e);
   }
   async encryptEmailEvent(
-    e: pb.EncryptEmailEvent
-  ): Promise<pb.EncryptEmailEvent> {
-    return this.promiseEvent(pb.MessageType.EncryptEmail, e);
+    e: pb.EncryptEmailEventReq
+  ): Promise<pb.EncryptEmailEventResp> {
+    return this.promiseEvent(pb.EventType.EncryptEmail, e);
   }
 
   // promise event
-  async promiseEvent(mt: pb.MessageType, e: any): Promise<any> {
-    e.req_id = Date.now().toString(10);
+  async promiseEvent(mt: pb.EventType, e: any): Promise<any> {
+    e.reqId = Date.now().toString(10);
 
     return new Promise((resolve, reject) => {
       this.send(mt, e);
 
       const timeoutID = setTimeout(() => {
-        this.emitter.rm(e.req_id);
+        this.emitter.rm(e.reqId);
       }, 12 * 1000);
       this.emitter.on(
-        e.req_id,
+        e.reqId,
         (data) => {
           resolve(data);
           clearTimeout(timeoutID);
@@ -77,7 +77,7 @@ export class KeyManager {
     });
   }
   // send message
-  private send(mt: pb.MessageType, obj: object) {
+  private send(mt: pb.EventType, obj: object) {
     if (!this.alive) {
       throw Error("Websocket connection not alive");
     }
@@ -89,34 +89,34 @@ export class KeyManager {
     const mt = new DataView(bytes).getInt32(0, false);
     const body = new Uint8Array(buf.slice(4));
 
-    switch (pb.decodeMessageType[mt]) {
-      case pb.MessageType.Echo:
-        return pb.decodeEchoEvent(body);
-      case pb.MessageType.Error:
-        return pb.decodeErrorEvent(body);
-      case pb.MessageType.CertList:
-        return pb.decodeCertListEvent(body);
-      case pb.MessageType.EmailInfo:
-        return pb.decodeEmailInfoEvent(body);
-      case pb.MessageType.SignEmail:
-        return pb.decodeSignEmailEvent(body);
+    switch (mt) {
+      case pb.EventType.Echo:
+        return pb.EchoEvent.decode(body);
+      case pb.EventType.Error:
+        return pb.ErrorEvent.decode(body);
+      case pb.EventType.CertList:
+        return pb.CertListEventResp.decode(body);
+      case pb.EventType.EmailInfo:
+        return pb.EmailInfoEventResp.decode(body);
+      case pb.EventType.SignEmail:
+        return pb.SignEmailEventResp.decode(body);
     }
     throw Error("Unsupported message type");
   }
-  private marshalProto(mt: pb.MessageType, msg: object) {
+  private marshalProto(mt: pb.EventType, msg: any) {
     let data: Uint8Array;
     switch (mt) {
-      case pb.MessageType.Echo:
-        data = pb.encodeEchoEvent(msg);
+      case pb.EventType.Echo:
+        data = pb.EchoEvent.encode(msg).finish();
         break;
-      case pb.MessageType.CertList:
-        data = pb.encodeCertListEvent(msg);
+      case pb.EventType.CertList:
+        data = pb.CertListEventReq.encode(msg).finish();
         break;
-      case pb.MessageType.EmailInfo:
-        data = pb.encodeEmailInfoEvent(msg);
+      case pb.EventType.EmailInfo:
+        data = pb.EmailInfoEventReq.encode(msg).finish();
         break;
-      case pb.MessageType.SignEmail:
-        data = pb.encodeSignEmailEvent(msg);
+      case pb.EventType.SignEmail:
+        data = pb.SignEmailEventReq.encode(msg).finish();
         break;
       default:
         throw Error("Unsupported message type");
@@ -124,7 +124,7 @@ export class KeyManager {
     // message type 4bytes
     const buf = new ArrayBuffer(4);
     const view = new DataView(buf);
-    view.setInt32(0, pb.encodeMessageType[mt], false);
+    view.setInt32(0, mt, false);
     const mType = new Uint8Array(buf);
     // protobuf message
     const result = new Uint8Array(data.length + 4);
