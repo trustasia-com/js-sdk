@@ -1,11 +1,16 @@
 import * as pb from "./pb";
 
 export class KeyManager {
+  // websocket
   socket: WebSocket;
   alive: boolean;
+  onOffline: () => void;
+  // emitter
   emitter: EventEmitter;
+  // 显示数字
+  onShowDigit: (num: string) => void;
 
-  constructor(endpoint: string) {
+  constructor(endpoint: string, onDigit?: (num: string) => void) {
     const socket = new WebSocket(endpoint);
     socket.onclose = (e) => this.onSocketClose(e);
     socket.onopen = (e) => this.onSocketOpen(e);
@@ -15,6 +20,12 @@ export class KeyManager {
     this.alive = false;
     this.socket = socket;
     this.emitter = new EventEmitter();
+    if (!onDigit) {
+      onDigit = function (num: string) {
+        alert(num);
+      };
+    }
+    this.onShowDigit = onDigit;
   }
 
   // websocket event handler
@@ -44,10 +55,14 @@ export class KeyManager {
   async certListEvent(e: pb.CertListEventReq): Promise<pb.CertListEventResp> {
     return this.promiseEvent(pb.EventType.CertList, e);
   }
-  async emailInfoEvent(e: pb.EmailInfoEventReq): Promise<pb.EmailInfoEventResp> {
+  async emailInfoEvent(
+    e: pb.EmailInfoEventReq
+  ): Promise<pb.EmailInfoEventResp> {
     return this.promiseEvent(pb.EventType.EmailInfo, e);
   }
-  async signEmailEvent(e: pb.SignEmailEventReq): Promise<pb.SignEmailEventResp> {
+  async signEmailEvent(
+    e: pb.SignEmailEventReq
+  ): Promise<pb.SignEmailEventResp> {
     return this.promiseEvent(pb.EventType.SignEmail, e);
   }
   async encryptEmailEvent(
