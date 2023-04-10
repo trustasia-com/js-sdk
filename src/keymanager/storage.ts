@@ -53,8 +53,13 @@ export class Storage {
     buf = await this.identity.NewHandshakeMsg(cipher.Secret);
 
     // handshake
-    const b64 = Buffer.from(buf).toString("base64");
-    req = this.client.newRequest("/smime/handshake", "POST", b64);
+    req = this.client.newRequest(
+      "/smime/handshake",
+      "POST",
+      buf.buffer.slice(0, buf.length)
+    );
+    req.withCredentials = false;
+    req.headers = { "Content-Type": "application/x-protobuf" };
     await this.client.request(req);
     return await cipher.Thumbprint(); // TODO
   }
@@ -64,12 +69,20 @@ export class Storage {
       .transaction(Storage.IDENTITY_STORAGE)
       .objectStore(Storage.IDENTITY_STORAGE)
       .get(Storage.IDENTITY);
+
+    let identity: keychat.Identity | null = null;
     if (!resp) {
       // init local identity
-      resp = await keychat.Identity.generateIdentity("name");
+      identity = await keychat.Identity.generateIdentity("name");
       await this.saveIdentity();
+    } else {
+      identity = new keychat.Identity(
+        resp.ID,
+        resp.SignedKey,
+        resp.ExchangeKey
+      );
     }
-    this.identity = resp;
+    this.identity = identity;
   }
 
   public async saveIdentity() {

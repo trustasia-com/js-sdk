@@ -37,16 +37,16 @@ export class HttpClient {
     return data.data;
   }
 
-  newRequest(
-    url: string,
-    method: string,
-    data?: object | string
-  ): AxiosRequestConfig {
+  newRequest(url: string, method: string, data?: any): AxiosRequestConfig {
+    let result = data;
+    if (typeof data === "object" && !(data instanceof ArrayBuffer)) {
+      result = JSON.stringify(data);
+    }
     return {
       url: `${this.baseURL}${url}`,
       baseURL: this.baseURL,
       method: method,
-      data: typeof data === "object" ? JSON.stringify(data) : data,
+      data: result,
     };
   }
 }
