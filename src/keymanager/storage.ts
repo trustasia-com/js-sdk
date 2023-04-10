@@ -2,6 +2,11 @@ import * as keychat from "@trustasia/keychat";
 import { openDB, IDBPDatabase } from "idb";
 import { HttpClient } from "../lib/client";
 
+export interface remoteIdentity {
+  signingKey: CryptoKey;
+  exchangeKey: CryptoKey;
+}
+
 export class Storage {
   public static STORAGE_NAME = "km-remote";
   public static IDENTITY_STORAGE = "identity";
@@ -25,8 +30,9 @@ export class Storage {
 
   protected db: IDBPDatabase;
   protected identity: keychat.Identity;
-  protected remoteIdentity: keychat.Identity;
+  protected remoteIdentity: remoteIdentity;
   protected client: HttpClient;
+  protected cipher: keychat.Cipher;
 
   private constructor(db: IDBPDatabase, host: string) {
     this.db = db;
@@ -38,7 +44,32 @@ export class Storage {
 
   public async isLoggedIn(): Promise<boolean> {
     // send request to server ensure logged in
-
+    await this.loadRemoteIdentity();
+    if (!this.remoteIdentity) {
+      return false;
+    }
+    // 请求state接口
+    const cipher = await this.identity.NewCipher(
+      this.remoteIdentity.signingKey,
+      this.remoteIdentity.exchangeKey
+    );
+    // get plaintext
+    const time = new Date().getTime();
+    const buf = new ArrayBuffer(8);
+    const view = new DataView(buf);
+    view.setFloat64(0, time);
+    const data = await cipher.Encrypt(buf);
+    let req = this.client.newRequest(
+      "/smime/state",
+      "POST",
+      data.slice().buffer
+    );
+    req.withCredentials = false;
+    const resp = await this.client.request(req);
+    if (time != resp.decrypted) {
+      return false;
+    }
+    this.cipher = cipher;
     return false;
   }
 
@@ -56,12 +87,20 @@ export class Storage {
     req = this.client.newRequest(
       "/smime/handshake",
       "POST",
-      buf.buffer.slice(0, buf.length)
+      buf.slice().buffer
     );
     req.withCredentials = false;
-    req.headers = { "Content-Type": "application/x-protobuf" };
+    req.headers = { "Content-Type": "application/octet-stream" };
     await this.client.request(req);
-    return await cipher.Thumbprint(); // TODO
+
+    // success
+    this.remoteIdentity = {
+      signingKey: cipher.RemoteSignedKey,
+      exchangeKey: cipher.RemoteExchangeKey,
+    };
+    this.cipher = cipher;
+    await this.saveRemoteIdentity();
+    return await cipher.Thumbprint();
   }
 
   public async loadIdentity() {
@@ -92,18 +131,18 @@ export class Storage {
       .put(this.identity, Storage.IDENTITY);
   }
 
-  public async loadRemoteIdentity(key: string) {
-    const resp: keychat.Identity = await this.db
+  public async loadRemoteIdentity() {
+    const resp: remoteIdentity = await this.db
       .transaction(Storage.REMOTE_STORAGE)
       .objectStore(Storage.REMOTE_STORAGE)
-      .get(key);
+      .get(Storage.REMOTE_IDENTITY);
     this.remoteIdentity = resp;
   }
 
-  public async saveRemoteIdentity(value: keychat.Identity) {
+  public async saveRemoteIdentity() {
     await this.db
       .transaction(Storage.REMOTE_STORAGE, "readwrite")
       .objectStore(Storage.REMOTE_STORAGE)
-      .put(value, Storage.REMOTE_IDENTITY);
+      .put(this.remoteIdentity, Storage.REMOTE_IDENTITY);
   }
 }

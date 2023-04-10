@@ -43,7 +43,6 @@ export class KeyManager {
     }
 
     const isLoggedIn = await this.storage.isLoggedIn();
-    console.log(isLoggedIn);
     if (!isLoggedIn) {
       // handshake
       const num = await this.storage.handshakeServer();
