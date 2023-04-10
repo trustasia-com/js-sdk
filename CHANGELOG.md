@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/trustasia-com/js-sdk/compare/v1.1.4...v1.2.0) (2023-04-10)
+
+
+### Features
+
+* add keymanager ([3cbb871](https://github.com/trustasia-com/js-sdk/commit/3cbb871c22bbe8ab36b4a3684000dbd0154896e5))
+* **wekey:** add wekey sdk ([d4473a8](https://github.com/trustasia-com/js-sdk/commit/d4473a8dbbbf59a1bb26cd40b191b16a566fc3e6))
+
 ### [1.1.4](https://github.com/trustasia-com/js-sdk/compare/v1.1.3...v1.1.4) (2022-08-11)
 
 ### [1.1.3](https://github.com/trustasia-com/js-sdk/compare/v1.1.2...v1.1.3) (2022-08-11)
