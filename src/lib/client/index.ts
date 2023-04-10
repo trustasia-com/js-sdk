@@ -22,10 +22,12 @@ export class HttpClient {
 
   async request(req: AxiosRequestConfig) {
     req.baseURL = this.baseURL;
-    if (req.headers) {
-      req.headers["User-Agent"] = this.userAgent;
-    } else {
-      req.headers = { "User-Agent": this.userAgent };
+    if (!window) {
+      if (req.headers) {
+        req.headers["User-Agent"] = this.userAgent;
+      } else {
+        req.headers = { "User-Agent": this.userAgent };
+      }
     }
 
     const { data } = await this.axios.request(req);
@@ -35,12 +37,16 @@ export class HttpClient {
     return data.data;
   }
 
-  newRequest(url: string, method: string, data?: object): AxiosRequestConfig {
+  newRequest(url: string, method: string, data?: any): AxiosRequestConfig {
+    let result = data;
+    if (typeof data === "object" && !(data instanceof ArrayBuffer)) {
+      result = JSON.stringify(data);
+    }
     return {
       url: `${this.baseURL}${url}`,
       baseURL: this.baseURL,
       method: method,
-      data: data ? JSON.stringify(data) : undefined,
+      data: result,
     };
   }
 }

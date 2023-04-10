@@ -1,0 +1,74 @@
+<html>
+  <head>
+    <script src="/index.min.js"></script>
+    <input type="file" id="file-input" />
+  </head>
+  <body>
+    <script>
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+      const fileInput = document.getElementById("file-input");
+      let uint8Array;
+      fileInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+
+        reader.addEventListener("load", (event) => {
+          const fileContents = event.target.result;
+          // 这里是文件内容，可以进行处理
+          uint8Array = new Uint8Array(fileContents);
+        });
+
+        reader.readAsArrayBuffer(file);
+      });
+
+      // 初始化km
+      const km = new TrustAsia.KeyManager("localhost:8878");
+      // 发送echo
+      async function testEvent() {
+        // 等待ws
+        console.log("等待10s，选择验证签名的邮件");
+        await sleep(5000);
+
+        // echo测试
+        const echo = await km.echoEvent({ msg: "Hello world!" });
+        if (echo.error) {
+          alert(echo.error)
+        }
+        console.log("echo=", echo);
+        // 获取证书列表
+        const list = await km.certListEvent({});
+        if (list.error) {
+          alert(echo.error)
+        }
+        console.log("certList=", list);
+        // 邮件信息：验证结果/解密结果
+        const ok = await km.emailInfoEvent({ body: uint8Array });
+        if (ok.signed) {
+          console.log("已签名");
+        }
+        if (ok.error) {
+          console.log(ok.error);
+        } else {
+          console.log("验证成功");
+        }
+        console.log(ok);
+        // 签名邮件
+        const result = await km.signEmailEvent({
+          certHash: "72f9b46d8c362b832af7b86befa98fff4e702218",
+          body: new TextEncoder().encode("这是正文内容"),
+          attachments: [],
+        });
+        if (list.error) {
+          alert(echo.error)
+        }
+        console.log(result);
+        const decoder = new TextDecoder();
+        const body = decoder.decode(result.body);
+        console.log(body);
+      }
+      testEvent();
+    </script>
+  </body>
+</html>

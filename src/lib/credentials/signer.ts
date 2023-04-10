@@ -1,7 +1,7 @@
 import sha256 from "crypto-js/sha256";
 import encHex from "crypto-js/enc-hex";
 import { parse } from "url";
-import { uriEscapePath, iso8601, each } from "../util/util";
+import { uriEscapePath, iso8601, each } from "../util";
 
 import { sumHMAC } from "./index";
 import { AxiosRequestConfig, AxiosRequestHeaders } from "axios";

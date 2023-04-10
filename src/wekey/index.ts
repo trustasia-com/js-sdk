@@ -9,7 +9,7 @@ import {
   RegResultReq,
   RegResultResp,
 } from "./types";
-import { HttpClient, Message } from "../lib/client/client";
+import { HttpClient, Message } from "../lib/client";
 
 export class WeKeyClient {
   httpClient: HttpClient;

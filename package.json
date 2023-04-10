@@ -21,10 +21,14 @@
     "clean": "rm -rf build"
   },
   "dependencies": {
+    "@trustasia/keychat": "^0.1.1",
     "axios": "^0.27.2",
     "buffer": "^6.0.3",
     "crypto-js": "^4.1.1",
-    "url": "^0.11.0"
+    "idb": "^7.1.1",
+    "protobufjs": "^7.2.3",
+    "url": "^0.11.0",
+    "websocket": "^1.0.34"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
@@ -40,6 +44,7 @@
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
     "ts-loader": "^8.0.14",
+    "ts-proto": "^1.146.0",
     "tslint": "^5.18.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-immutable": "^6.0.1",
