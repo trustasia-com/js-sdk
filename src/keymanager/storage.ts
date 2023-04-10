@@ -84,11 +84,7 @@ export class Storage {
     buf = await this.identity.NewHandshakeMsg(cipher.Secret);
 
     // handshake
-    req = this.client.newRequest(
-      "/smime/handshake",
-      "POST",
-      buf.slice().buffer
-    );
+    req = this.client.newRequest("/smime/handshake", "POST", buf.slice().buffer);
     req.withCredentials = false;
     req.headers = { "Content-Type": "application/octet-stream" };
     await this.client.request(req);

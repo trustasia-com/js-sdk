@@ -5,11 +5,11 @@ export class KeyManager {
   // websocket
   socket: WebSocket;
   alive: boolean;
-  onOffline: () => void;
   // emitter
   emitter: EventEmitter;
-  // 显示数字
+  // 回调函数：显示数字
   onShowDigit: (num: string) => void;
+  onOffline: () => void;
   // keychat
   storage: Storage;
 
@@ -36,11 +36,7 @@ export class KeyManager {
   private async init(host: string) {
     this.storage = await Storage.create(host);
 
-    try {
-      await this.storage.loadIdentity();
-    } catch (error) {
-      console.log(error);
-    }
+    await this.storage.loadIdentity();
 
     const isLoggedIn = await this.storage.isLoggedIn();
     if (!isLoggedIn) {
@@ -101,10 +97,11 @@ export class KeyManager {
 
     return new Promise((resolve, reject) => {
       this.send(mt, e);
-
+      // timeout
       const timeoutID = setTimeout(() => {
         this.emitter.rm(e.reqId);
       }, 12 * 1000);
+      // register
       this.emitter.on(
         e.reqId,
         (data) => {
@@ -196,7 +193,7 @@ class EventEmitter {
     let cbs = this.callbacks[event];
     if (cbs) {
       delete this.callbacks[event];
-      cbs[1]("Timeout");
+      cbs[1]("Message Handle Timeout");
     }
   }
 }
