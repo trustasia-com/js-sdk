@@ -1,4 +1,5 @@
 import * as pb from "./pb";
+import { Storage } from "./storage";
 
 export class KeyManager {
   // websocket
@@ -9,9 +10,11 @@ export class KeyManager {
   emitter: EventEmitter;
   // 显示数字
   onShowDigit: (num: string) => void;
+  // keychat
+  storage: Storage;
 
-  constructor(endpoint: string, onDigit?: (num: string) => void) {
-    const socket = new WebSocket(endpoint);
+  constructor(host: string, onDigit?: (num: string) => void) {
+    const socket = new WebSocket("ws://" + host + "/smime/wb");
     socket.onclose = (e) => this.onSocketClose(e);
     socket.onopen = (e) => this.onSocketOpen(e);
     socket.onmessage = (e) => this.onSocketMessage(e);
@@ -22,10 +25,30 @@ export class KeyManager {
     this.emitter = new EventEmitter();
     if (!onDigit) {
       onDigit = function (num: string) {
-        alert(num);
+        alert("keymanager PIN: " + num);
       };
     }
     this.onShowDigit = onDigit;
+    // storage
+    this.init(host);
+  }
+  // init some async params
+  private async init(host: string) {
+    this.storage = await Storage.create(host);
+
+    try {
+      await this.storage.loadIdentity();
+    } catch (error) {
+      console.log(error);
+    }
+
+    const isLoggedIn = await this.storage.isLoggedIn();
+    console.log(isLoggedIn);
+    if (!isLoggedIn) {
+      // handshake
+      const num = await this.storage.handshakeServer();
+      this.onShowDigit(num);
+    }
   }
 
   // websocket event handler
@@ -43,36 +66,38 @@ export class KeyManager {
     this.emitter.emit(obj.reqId, obj);
   }
   // export functions
-  async echoEvent(e: pb.EchoEvent): Promise<pb.EchoEvent> {
+  public async echoEvent(e: pb.EchoEvent): Promise<pb.EchoEvent> {
     return this.promiseEvent(pb.EventType.Echo, e);
   }
-  async errorEvent(e: pb.ErrorEvent): Promise<pb.ErrorEvent> {
+  public async errorEvent(e: pb.ErrorEvent): Promise<pb.ErrorEvent> {
     return this.promiseEvent(pb.EventType.Error, e);
   }
-  async statusEvent(e: pb.StatusEventReq): Promise<pb.StatusEventResp> {
+  public async statusEvent(e: pb.StatusEventReq): Promise<pb.StatusEventResp> {
     return this.promiseEvent(pb.EventType.Status, e);
   }
-  async certListEvent(e: pb.CertListEventReq): Promise<pb.CertListEventResp> {
+  public async certListEvent(
+    e: pb.CertListEventReq
+  ): Promise<pb.CertListEventResp> {
     return this.promiseEvent(pb.EventType.CertList, e);
   }
-  async emailInfoEvent(
+  public async emailInfoEvent(
     e: pb.EmailInfoEventReq
   ): Promise<pb.EmailInfoEventResp> {
     return this.promiseEvent(pb.EventType.EmailInfo, e);
   }
-  async signEmailEvent(
+  public async signEmailEvent(
     e: pb.SignEmailEventReq
   ): Promise<pb.SignEmailEventResp> {
     return this.promiseEvent(pb.EventType.SignEmail, e);
   }
-  async encryptEmailEvent(
+  public async encryptEmailEvent(
     e: pb.EncryptEmailEventReq
   ): Promise<pb.EncryptEmailEventResp> {
     return this.promiseEvent(pb.EventType.EncryptEmail, e);
   }
 
   // promise event
-  async promiseEvent(mt: pb.EventType, e: any): Promise<any> {
+  private async promiseEvent(mt: pb.EventType, e: any): Promise<any> {
     e.reqId = Date.now().toString(10);
 
     return new Promise((resolve, reject) => {

@@ -1039,6 +1039,13 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
+"@trustasia/keychat@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@trustasia/keychat/-/keychat-0.1.1.tgz#c54b76a39b0bd97a45a997f9a666d3e62319d745"
+  integrity sha512-+UjZyMebPspOq5laWH9W+VbA1SwhU8uMDsFcJqZ0+83kPh2S4RCud+aI95c2AvpWC9Or6cODlqddV6q5e0Z0jA==
+  dependencies:
+    ts-proto "^1.145.0"
+
 "@types/body-parser@*":
   version "1.19.2"
   resolved "https://registry.yarnpkg.com/@types/body-parser/-/body-parser-1.19.2.tgz#aea2059e28b7658639081347ac4fab3de166e6f0"
@@ -3668,7 +3675,7 @@ ts-proto-descriptors@1.8.0:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.146.0:
+ts-proto@^1.145.0, ts-proto@^1.146.0:
   version "1.146.0"
   resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.146.0.tgz#4017c700976d3657009c4e7e741377a4272ffc27"
   integrity sha512-OyBZRjmqqw+aatLEUbRooWO6VKTtOLJQyaQFMciigEZPNgTsWtApqHpQDtqDMQFWEXhIARqEV+B7ZJx8cljhZA==

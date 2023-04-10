@@ -1,6 +1,6 @@
 <html>
   <head>
-    <script src="../build/browser/index.min.js"></script>
+    <script src="/index.min.js"></script>
     <input type="file" id="file-input" />
   </head>
   <body>
@@ -24,7 +24,7 @@
       });
 
       // 初始化km
-      const km = new TrustAsia.KeyManager("ws://localhost:8878/smime/wb");
+      const km = new TrustAsia.KeyManager("localhost:8878");
       // 发送echo
       async function testEvent() {
         // 等待ws
@@ -59,7 +59,7 @@
         const body = decoder.decode(result.body);
         console.log(body);
       }
-      testEvent();
+      // testEvent();
     </script>
   </body>
 </html>

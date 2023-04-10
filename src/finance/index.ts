@@ -4,7 +4,7 @@ import {
   CreateSubscribeResp,
   FinanceCallbackReq,
 } from "./types";
-import { HttpClient } from "../lib/client/client";
+import { HttpClient } from "../lib/client";
 import { Request } from "express";
 import { stringify } from "qs";
 

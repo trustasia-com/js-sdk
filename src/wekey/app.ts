@@ -1,4 +1,4 @@
-import { HttpClient } from "../lib/client/client";
+import { HttpClient } from "../lib/client";
 import { RegQRCodeResp } from "./types";
 
 export class WeKeyApp {
