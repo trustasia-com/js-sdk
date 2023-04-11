@@ -62,7 +62,7 @@
           body: new TextEncoder().encode("这是正文内容"),
           attachments: [],
         });
-        if (list.error) {
+        if (result.error) {
           alert(echo.error);
         }
         console.log(result);
