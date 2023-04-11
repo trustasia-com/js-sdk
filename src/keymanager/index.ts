@@ -9,6 +9,7 @@ export class KeyManager {
   emitter: EventEmitter;
   // 回调函数：显示数字
   onShowDigit: (num: string) => void;
+  onHideDigit: (success: boolean) => void;
   onOffline: () => void;
   // keychat
   storage: Storage;
@@ -29,6 +30,9 @@ export class KeyManager {
       };
     }
     this.onShowDigit = onDigit;
+    this.onHideDigit = function (success: boolean) {
+      console.log(success);
+    };
     // storage
     this.init(host);
   }
@@ -41,7 +45,7 @@ export class KeyManager {
     const isLoggedIn = await this.storage.isLoggedIn();
     if (!isLoggedIn) {
       // handshake
-      const num = await this.storage.handshakeServer();
+      const num = await this.storage.handshakeServer(this.onHideDigit);
       this.onShowDigit(num);
     }
   }

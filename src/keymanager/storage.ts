@@ -73,7 +73,7 @@ export class Storage {
     return false;
   }
 
-  public async handshakeServer(): Promise<string> {
+  public async handshakeServer(hideDigit: Function): Promise<string> {
     // request pre key
     let req = this.client.newRequest("/smime/prekey-bundle", "GET");
     req.withCredentials = false;
@@ -84,18 +84,26 @@ export class Storage {
     buf = await this.identity.NewHandshakeMsg(cipher.Secret);
 
     // handshake
-    req = this.client.newRequest("/smime/handshake", "POST", buf.slice().buffer);
+    req = this.client.newRequest(
+      "/smime/handshake",
+      "POST",
+      buf.slice().buffer
+    );
     req.withCredentials = false;
     req.headers = { "Content-Type": "application/octet-stream" };
-    await this.client.request(req);
+    this.client.request(req).then((resp) => {
+      hideDigit(resp.paired);
+      if (resp.paired) {
+        // success
+        this.remoteIdentity = {
+          signingKey: cipher.RemoteSignedKey,
+          exchangeKey: cipher.RemoteExchangeKey,
+        };
+        this.cipher = cipher;
+      }
 
-    // success
-    this.remoteIdentity = {
-      signingKey: cipher.RemoteSignedKey,
-      exchangeKey: cipher.RemoteExchangeKey,
-    };
-    this.cipher = cipher;
-    await this.saveRemoteIdentity();
+      this.saveRemoteIdentity();
+    });
     return await cipher.Thumbprint();
   }
 
