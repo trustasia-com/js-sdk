@@ -66,11 +66,10 @@ export class Storage {
     );
     req.withCredentials = false;
     const resp = await this.client.request(req);
-    if (time != resp.decrypted) {
-      return false;
+    if (resp.status) {
+      this.cipher = cipher;
     }
-    this.cipher = cipher;
-    return false;
+    return resp.status;
   }
 
   public async handshakeServer(hideDigit: Function): Promise<string> {
