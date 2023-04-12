@@ -4,6 +4,7 @@ import { Storage } from "./storage";
 export class KeyManager {
   // websocket
   socket: WebSocket;
+  host: string;
   alive: boolean;
   // emitter
   emitter: EventEmitter;
@@ -22,6 +23,7 @@ export class KeyManager {
     socket.binaryType = "arraybuffer";
 
     this.alive = false;
+    this.host = host;
     this.socket = socket;
     this.emitter = new EventEmitter();
     if (!onDigit) {
@@ -33,12 +35,10 @@ export class KeyManager {
     this.onHideDigit = function (success: boolean) {
       console.log(success);
     };
-    // storage
-    this.init(host);
   }
   // init some async params
-  private async init(host: string) {
-    this.storage = await Storage.create(host);
+  public async init() {
+    this.storage = await Storage.create(this.host);
 
     await this.storage.loadIdentity();
 

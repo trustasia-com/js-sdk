@@ -162,12 +162,18 @@ export interface EmailInfoEventResp {
   reason: string;
 }
 
+export interface Attachment {
+  /** http:// or https:// or name */
+  name: string;
+  body: Uint8Array;
+}
+
 export interface SignEmailEventReq {
   reqId: string;
   /** 邮件待签名/已签名内容 */
   body: Uint8Array;
   /** 附件路径/url */
-  attachments: string[];
+  attachments: Attachment[];
   /** 指定证书 */
   certHash: string;
 }
@@ -182,10 +188,10 @@ export interface EncryptEmailEventReq {
   reqId: string;
   /** 待加密签名内容 */
   body: Uint8Array;
-  /** 附件 */
+  /** 附件或URL */
   attachments: string[];
-  /** 指定证书 */
-  certHash: string;
+  /** 发送给 */
+  to: string;
 }
 
 export interface EncryptEmailEventResp {
@@ -1081,6 +1087,78 @@ export const EmailInfoEventResp = {
   },
 };
 
+function createBaseAttachment(): Attachment {
+  return { name: "", body: new Uint8Array() };
+}
+
+export const Attachment = {
+  encode(message: Attachment, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.body.length !== 0) {
+      writer.uint32(18).bytes(message.body);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Attachment {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAttachment();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag != 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        case 2:
+          if (tag != 18) {
+            break;
+          }
+
+          message.body = reader.bytes();
+          continue;
+      }
+      if ((tag & 7) == 4 || tag == 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Attachment {
+    return {
+      name: isSet(object.name) ? String(object.name) : "",
+      body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
+    };
+  },
+
+  toJSON(message: Attachment): unknown {
+    const obj: any = {};
+    message.name !== undefined && (obj.name = message.name);
+    message.body !== undefined &&
+      (obj.body = base64FromBytes(message.body !== undefined ? message.body : new Uint8Array()));
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Attachment>, I>>(base?: I): Attachment {
+    return Attachment.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<Attachment>, I>>(object: I): Attachment {
+    const message = createBaseAttachment();
+    message.name = object.name ?? "";
+    message.body = object.body ?? new Uint8Array();
+    return message;
+  },
+};
+
 function createBaseSignEmailEventReq(): SignEmailEventReq {
   return { reqId: "", body: new Uint8Array(), attachments: [], certHash: "" };
 }
@@ -1094,7 +1172,7 @@ export const SignEmailEventReq = {
       writer.uint32(18).bytes(message.body);
     }
     for (const v of message.attachments) {
-      writer.uint32(26).string(v!);
+      Attachment.encode(v!, writer.uint32(26).fork()).ldelim();
     }
     if (message.certHash !== "") {
       writer.uint32(34).string(message.certHash);
@@ -1128,7 +1206,7 @@ export const SignEmailEventReq = {
             break;
           }
 
-          message.attachments.push(reader.string());
+          message.attachments.push(Attachment.decode(reader, reader.uint32()));
           continue;
         case 4:
           if (tag != 34) {
@@ -1150,7 +1228,7 @@ export const SignEmailEventReq = {
     return {
       reqId: isSet(object.reqId) ? String(object.reqId) : "",
       body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
-      attachments: Array.isArray(object?.attachments) ? object.attachments.map((e: any) => String(e)) : [],
+      attachments: Array.isArray(object?.attachments) ? object.attachments.map((e: any) => Attachment.fromJSON(e)) : [],
       certHash: isSet(object.certHash) ? String(object.certHash) : "",
     };
   },
@@ -1161,7 +1239,7 @@ export const SignEmailEventReq = {
     message.body !== undefined &&
       (obj.body = base64FromBytes(message.body !== undefined ? message.body : new Uint8Array()));
     if (message.attachments) {
-      obj.attachments = message.attachments.map((e) => e);
+      obj.attachments = message.attachments.map((e) => e ? Attachment.toJSON(e) : undefined);
     } else {
       obj.attachments = [];
     }
@@ -1177,7 +1255,7 @@ export const SignEmailEventReq = {
     const message = createBaseSignEmailEventReq();
     message.reqId = object.reqId ?? "";
     message.body = object.body ?? new Uint8Array();
-    message.attachments = object.attachments?.map((e) => e) || [];
+    message.attachments = object.attachments?.map((e) => Attachment.fromPartial(e)) || [];
     message.certHash = object.certHash ?? "";
     return message;
   },
@@ -1256,7 +1334,7 @@ export const SignEmailEventResp = {
 };
 
 function createBaseEncryptEmailEventReq(): EncryptEmailEventReq {
-  return { reqId: "", body: new Uint8Array(), attachments: [], certHash: "" };
+  return { reqId: "", body: new Uint8Array(), attachments: [], to: "" };
 }
 
 export const EncryptEmailEventReq = {
@@ -1270,8 +1348,8 @@ export const EncryptEmailEventReq = {
     for (const v of message.attachments) {
       writer.uint32(26).string(v!);
     }
-    if (message.certHash !== "") {
-      writer.uint32(34).string(message.certHash);
+    if (message.to !== "") {
+      writer.uint32(34).string(message.to);
     }
     return writer;
   },
@@ -1309,7 +1387,7 @@ export const EncryptEmailEventReq = {
             break;
           }
 
-          message.certHash = reader.string();
+          message.to = reader.string();
           continue;
       }
       if ((tag & 7) == 4 || tag == 0) {
@@ -1325,7 +1403,7 @@ export const EncryptEmailEventReq = {
       reqId: isSet(object.reqId) ? String(object.reqId) : "",
       body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
       attachments: Array.isArray(object?.attachments) ? object.attachments.map((e: any) => String(e)) : [],
-      certHash: isSet(object.certHash) ? String(object.certHash) : "",
+      to: isSet(object.to) ? String(object.to) : "",
     };
   },
 
@@ -1339,7 +1417,7 @@ export const EncryptEmailEventReq = {
     } else {
       obj.attachments = [];
     }
-    message.certHash !== undefined && (obj.certHash = message.certHash);
+    message.to !== undefined && (obj.to = message.to);
     return obj;
   },
 
@@ -1352,7 +1430,7 @@ export const EncryptEmailEventReq = {
     message.reqId = object.reqId ?? "";
     message.body = object.body ?? new Uint8Array();
     message.attachments = object.attachments?.map((e) => e) || [];
-    message.certHash = object.certHash ?? "";
+    message.to = object.to ?? "";
     return message;
   },
 };

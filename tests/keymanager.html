@@ -27,6 +27,11 @@
       const km = new TrustAsia.KeyManager("localhost:8878");
       // 发送echo
       async function testEvent() {
+        try {
+        await km.init();
+      } catch (error) {
+        console.log(error)
+      }
         // 等待ws
         console.log("等待10s，选择验证签名的邮件");
         await sleep(5000);
