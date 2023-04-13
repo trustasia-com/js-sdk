@@ -30,13 +30,21 @@ export class KeyManager {
   // init some async params
   public async init() {
     // websocket
-    const socket = new WebSocket("ws://" + this.host + "/smime/wb");
-    socket.onclose = (e) => this.onSocketClose(e);
-    socket.onopen = (e) => this.onSocketOpen(e);
-    socket.onmessage = (e) => this.onSocketMessage(e);
-    socket.onerror = (e) => this.onSocketError(e);
-    socket.binaryType = "arraybuffer";
-    this.socket = socket;
+    await new Promise((resolve, reject) => {
+      const socket = new WebSocket("ws://" + this.host + "/smime/wb");
+      socket.onclose = (e) => {
+        reject(e);
+        this.onSocketClose(e);
+      };
+      socket.onopen = (e) => {
+        resolve(e);
+        this.onSocketOpen(e);
+      };
+      socket.onmessage = (e) => this.onSocketMessage(e);
+      socket.binaryType = "arraybuffer";
+      this.socket = socket;
+    });
+
     // storage
     this.storage = await Storage.create(this.host);
     await this.storage.loadIdentity();
@@ -55,10 +63,6 @@ export class KeyManager {
   }
   onSocketClose(event: CloseEvent) {
     console.log("connection closed: ", event.code, event.reason);
-    this.setOnline(false);
-  }
-  onSocketError(event: Event) {
-    console.log("failed to connect: ", event.type);
     this.setOnline(false);
   }
   protected onSocketMessage(event: MessageEvent) {
