@@ -16,15 +16,6 @@ export class KeyManager {
   protected storage: Storage;
 
   constructor(host: string, onDigit: (num: string) => void) {
-    // websocket
-    const socket = new WebSocket("ws://" + host + "/smime/wb");
-    socket.onclose = (e) => this.onSocketClose(e);
-    socket.onopen = (e) => this.onSocketOpen(e);
-    socket.onmessage = (e) => this.onSocketMessage(e);
-    socket.onerror = (e) => this.onSocketError(e);
-    socket.binaryType = "arraybuffer";
-    this.socket = socket;
-
     this.online = false;
     this.host = host;
     this.emitter = new EventEmitter();
@@ -38,6 +29,14 @@ export class KeyManager {
   }
   // init some async params
   public async init() {
+    // websocket
+    const socket = new WebSocket("ws://" + this.host + "/smime/wb");
+    socket.onclose = (e) => this.onSocketClose(e);
+    socket.onopen = (e) => this.onSocketOpen(e);
+    socket.onmessage = (e) => this.onSocketMessage(e);
+    socket.onerror = (e) => this.onSocketError(e);
+    socket.binaryType = "arraybuffer";
+    this.socket = socket;
     // storage
     this.storage = await Storage.create(this.host);
     await this.storage.loadIdentity();
