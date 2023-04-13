@@ -52,19 +52,24 @@ export class KeyManager {
   // websocket event handler
   onSocketOpen(event: Event) {
     console.log("connection opened", event.target);
-    this.online = true;
+    this.setOnline(true);
   }
   onSocketClose(event: CloseEvent) {
     console.log("connection closed: ", event.code, event.reason);
-    this.online = false;
+    this.setOnline(false);
   }
   onSocketError(event: Event) {
     console.log("failed to connect: ", event.type);
+    this.setOnline(false);
   }
   protected onSocketMessage(event: MessageEvent) {
     const obj = this.unmarshalProto(event.data);
     console.log("received a message: ", obj);
     this.emitter.emit(obj.reqId, obj);
+  }
+  protected setOnline(ok: boolean) {
+    this.online = ok;
+    this.onAliveStatus(this.online);
   }
   // export functions
   public async echoEvent(e: pb.EchoEvent): Promise<pb.EchoEvent> {
