@@ -15,7 +15,7 @@ export class Storage {
   public static REMOTE_IDENTITY = "remoteIdentity";
 
   public static async create(endpoint: string) {
-    const db = await openDB(this.STORAGE_NAME, 1, {
+    const db = await openDB(this.STORAGE_NAME, 2, {
       upgrade(db, oldVersion) {
         if (oldVersion === 1) {
           db.deleteObjectStore(Storage.IDENTITY_STORAGE);
