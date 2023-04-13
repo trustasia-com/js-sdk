@@ -3,48 +3,47 @@ import { Storage } from "./storage";
 
 export class KeyManager {
   // websocket
-  socket: WebSocket;
-  host: string;
-  alive: boolean;
+  protected socket: WebSocket;
+  protected host: string;
+  protected online: boolean;
   // emitter
-  emitter: EventEmitter;
+  protected emitter: EventEmitter;
   // 回调函数：显示数字
   onShowDigit: (num: string) => void;
-  onHideDigit: (success: boolean) => void;
-  onOffline: () => void;
+  onHideDigit: (ok: boolean) => void;
+  onAliveStatus: (online: boolean) => void;
   // keychat
-  storage: Storage;
+  protected storage: Storage;
 
-  constructor(host: string, onDigit?: (num: string) => void) {
+  constructor(host: string, onDigit: (num: string) => void) {
+    // websocket
     const socket = new WebSocket("ws://" + host + "/smime/wb");
     socket.onclose = (e) => this.onSocketClose(e);
     socket.onopen = (e) => this.onSocketOpen(e);
     socket.onmessage = (e) => this.onSocketMessage(e);
+    socket.onerror = (e) => this.onSocketError(e);
     socket.binaryType = "arraybuffer";
-
-    this.alive = false;
-    this.host = host;
     this.socket = socket;
+
+    this.online = false;
+    this.host = host;
     this.emitter = new EventEmitter();
-    if (!onDigit) {
-      onDigit = function (num: string) {
-        alert("keymanager PIN: " + num);
-      };
-    }
     this.onShowDigit = onDigit;
-    this.onHideDigit = function (success: boolean) {
-      console.log(success);
+    this.onHideDigit = function (ok: boolean) {
+      console.log(ok);
+    };
+    this.onAliveStatus = function (online: boolean) {
+      console.log("alive: ", online);
     };
   }
   // init some async params
   public async init() {
+    // storage
     this.storage = await Storage.create(this.host);
-
     await this.storage.loadIdentity();
-
+    // handshake
     const isLoggedIn = await this.storage.isLoggedIn();
     if (!isLoggedIn) {
-      // handshake
       const num = await this.storage.handshakeServer(this.onHideDigit);
       this.onShowDigit(num);
     }
@@ -53,13 +52,16 @@ export class KeyManager {
   // websocket event handler
   onSocketOpen(event: Event) {
     console.log("connection opened", event.target);
-    this.alive = true;
+    this.online = true;
   }
   onSocketClose(event: CloseEvent) {
     console.log("connection closed: ", event.code, event.reason);
-    this.alive = false;
+    this.online = false;
   }
-  onSocketMessage(event: MessageEvent) {
+  onSocketError(event: Event) {
+    console.log("failed to connect: ", event.type);
+  }
+  protected onSocketMessage(event: MessageEvent) {
     const obj = this.unmarshalProto(event.data);
     console.log("received a message: ", obj);
     this.emitter.emit(obj.reqId, obj);
@@ -96,7 +98,7 @@ export class KeyManager {
   }
 
   // promise event
-  private async promiseEvent(mt: pb.EventType, e: any): Promise<any> {
+  protected async promiseEvent(mt: pb.EventType, e: any): Promise<any> {
     e.reqId = Date.now().toString(10);
 
     return new Promise((resolve, reject) => {
@@ -117,14 +119,14 @@ export class KeyManager {
     });
   }
   // send message
-  private send(mt: pb.EventType, obj: object) {
-    if (!this.alive) {
+  protected send(mt: pb.EventType, obj: object) {
+    if (!this.online) {
       throw Error("Websocket connection not alive");
     }
     this.marshalProto(mt, obj);
   }
   // message encode / decode
-  private unmarshalProto(buf: ArrayBuffer) {
+  protected unmarshalProto(buf: ArrayBuffer) {
     const bytes = buf.slice(0, 4);
     const mt = new DataView(bytes).getInt32(0, false);
     const body = new Uint8Array(buf.slice(4));
@@ -143,7 +145,7 @@ export class KeyManager {
     }
     throw Error("Unsupported message type");
   }
-  private marshalProto(mt: pb.EventType, msg: any) {
+  protected marshalProto(mt: pb.EventType, msg: any) {
     let data: Uint8Array;
     switch (mt) {
       case pb.EventType.Echo:
