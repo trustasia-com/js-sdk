@@ -112,19 +112,19 @@ export class Storage {
       .objectStore(Storage.IDENTITY_STORAGE)
       .get(Storage.IDENTITY);
 
-    let identity: keychat.Identity | null = null;
-    if (!resp) {
-      // init local identity
-      identity = await keychat.Identity.generateIdentity("name");
-      await this.saveIdentity();
-    } else {
-      identity = new keychat.Identity(
+    if (resp) {
+      const identity = new keychat.Identity(
         resp.ID,
         resp.SignedKey,
         resp.ExchangeKey
       );
+      this.identity = identity;
+      return;
     }
+    // init local identity
+    const identity = await keychat.Identity.generateIdentity("localIdentity");
     this.identity = identity;
+    await this.saveIdentity();
   }
 
   public async saveIdentity() {
