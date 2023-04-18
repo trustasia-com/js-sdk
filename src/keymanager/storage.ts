@@ -32,7 +32,7 @@ export class Storage {
   protected identity: keychat.Identity;
   protected remoteIdentity: remoteIdentity;
   protected client: HttpClient;
-  protected cipher: keychat.Cipher;
+  public cipher: keychat.Cipher;
 
   private constructor(db: IDBPDatabase, host: string) {
     this.db = db;

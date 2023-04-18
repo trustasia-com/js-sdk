@@ -65,8 +65,8 @@ export class KeyManager {
     console.log("connection closed: ", event.code, event.reason);
     this.setOnline(false);
   }
-  protected onSocketMessage(event: MessageEvent) {
-    const obj = this.unmarshalProto(event.data);
+  protected async onSocketMessage(event: MessageEvent) {
+    const obj = await this.unmarshalProto(event.data);
     console.log("received a message: ", obj);
     this.emitter.emit(obj.reqId, obj);
   }
@@ -134,26 +134,29 @@ export class KeyManager {
     this.marshalProto(mt, obj);
   }
   // message encode / decode
-  protected unmarshalProto(buf: ArrayBuffer) {
+  protected async unmarshalProto(buf: ArrayBuffer) {
     const bytes = buf.slice(0, 4);
     const mt = new DataView(bytes).getInt32(0, false);
     const body = new Uint8Array(buf.slice(4));
 
+    // decrypt
+    const plaintext = await this.storage.cipher.Decrypt(body);
+    const data = new Uint8Array(plaintext);
     switch (mt) {
       case pb.EventType.Echo:
-        return pb.EchoEvent.decode(body);
+        return pb.EchoEvent.decode(data);
       case pb.EventType.Error:
-        return pb.ErrorEvent.decode(body);
+        return pb.ErrorEvent.decode(data);
       case pb.EventType.CertList:
-        return pb.CertListEventResp.decode(body);
+        return pb.CertListEventResp.decode(data);
       case pb.EventType.EmailInfo:
-        return pb.EmailInfoEventResp.decode(body);
+        return pb.EmailInfoEventResp.decode(data);
       case pb.EventType.SignEmail:
-        return pb.SignEmailEventResp.decode(body);
+        return pb.SignEmailEventResp.decode(data);
     }
     throw Error("Unsupported message type");
   }
-  protected marshalProto(mt: pb.EventType, msg: any) {
+  protected async marshalProto(mt: pb.EventType, msg: any) {
     let data: Uint8Array;
     switch (mt) {
       case pb.EventType.Echo:
@@ -176,10 +179,11 @@ export class KeyManager {
     const view = new DataView(buf);
     view.setInt32(0, mt, false);
     const mType = new Uint8Array(buf);
-    // protobuf message
-    const result = new Uint8Array(data.length + 4);
+    // encrypt
+    const cipher = await this.storage.cipher.Encrypt(new Uint8Array(data));
+    const result = new Uint8Array(cipher.length + 4);
     result.set(mType, 0);
-    result.set(data, 4);
+    result.set(cipher, 4);
     this.socket.send(result);
   }
 }
