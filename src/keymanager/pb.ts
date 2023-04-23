@@ -86,6 +86,10 @@ export interface CertInfo {
   hash: string;
   /** 通用名称 */
   commonName: string;
+  /** 电子邮件 */
+  emails: string[];
+  /** 颁发者 */
+  issuer: string;
 }
 
 export interface EchoEvent {
@@ -201,7 +205,7 @@ export interface EncryptEmailEventResp {
 }
 
 function createBaseCertInfo(): CertInfo {
-  return { hash: "", commonName: "" };
+  return { hash: "", commonName: "", emails: [], issuer: "" };
 }
 
 export const CertInfo = {
@@ -211,6 +215,12 @@ export const CertInfo = {
     }
     if (message.commonName !== "") {
       writer.uint32(18).string(message.commonName);
+    }
+    for (const v of message.emails) {
+      writer.uint32(26).string(v!);
+    }
+    if (message.issuer !== "") {
+      writer.uint32(34).string(message.issuer);
     }
     return writer;
   },
@@ -236,6 +246,20 @@ export const CertInfo = {
 
           message.commonName = reader.string();
           continue;
+        case 3:
+          if (tag != 26) {
+            break;
+          }
+
+          message.emails.push(reader.string());
+          continue;
+        case 4:
+          if (tag != 34) {
+            break;
+          }
+
+          message.issuer = reader.string();
+          continue;
       }
       if ((tag & 7) == 4 || tag == 0) {
         break;
@@ -249,6 +273,8 @@ export const CertInfo = {
     return {
       hash: isSet(object.hash) ? String(object.hash) : "",
       commonName: isSet(object.commonName) ? String(object.commonName) : "",
+      emails: Array.isArray(object?.emails) ? object.emails.map((e: any) => String(e)) : [],
+      issuer: isSet(object.issuer) ? String(object.issuer) : "",
     };
   },
 
@@ -256,6 +282,12 @@ export const CertInfo = {
     const obj: any = {};
     message.hash !== undefined && (obj.hash = message.hash);
     message.commonName !== undefined && (obj.commonName = message.commonName);
+    if (message.emails) {
+      obj.emails = message.emails.map((e) => e);
+    } else {
+      obj.emails = [];
+    }
+    message.issuer !== undefined && (obj.issuer = message.issuer);
     return obj;
   },
 
@@ -267,6 +299,8 @@ export const CertInfo = {
     const message = createBaseCertInfo();
     message.hash = object.hash ?? "";
     message.commonName = object.commonName ?? "";
+    message.emails = object.emails?.map((e) => e) || [];
+    message.issuer = object.issuer ?? "";
     return message;
   },
 };
