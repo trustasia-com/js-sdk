@@ -48,7 +48,7 @@
         }
         console.log("certList=", list);
         // 邮件信息：验证结果/解密结果
-        const ok = await km.emailInfoEvent({ body: uint8Array });
+        const ok = await km.emailInfoEvent({ body: uint8Array, recipient: '' });
         if (ok.signed) {
           console.log("已签名");
         } else {

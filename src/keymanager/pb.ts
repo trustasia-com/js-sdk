@@ -118,6 +118,7 @@ export interface StatusEventResp {
 
 export interface CertListEventReq {
   reqId: string;
+  forSend: boolean;
 }
 
 export interface CertListEventResp {
@@ -146,6 +147,8 @@ export interface EmailInfoEventReq {
   reqId: string;
   /** 请求密文-响应明文 */
   body: Uint8Array;
+  /** 当前邮箱 */
+  recipient: string;
 }
 
 export interface EmailInfoEventResp {
@@ -193,15 +196,19 @@ export interface EncryptEmailEventReq {
   /** 待加密签名内容 */
   body: Uint8Array;
   /** 附件或URL */
-  attachments: string[];
+  attachments: Attachment[];
   /** 发送给 */
-  to: string;
+  tos: string[];
 }
 
 export interface EncryptEmailEventResp {
   reqId: string;
   /** 密文 */
   body: Uint8Array;
+  /** 错误 */
+  error: string;
+  /** 提示信息 */
+  reason: string;
 }
 
 function createBaseCertInfo(): CertInfo {
@@ -600,13 +607,16 @@ export const StatusEventResp = {
 };
 
 function createBaseCertListEventReq(): CertListEventReq {
-  return { reqId: "" };
+  return { reqId: "", forSend: false };
 }
 
 export const CertListEventReq = {
   encode(message: CertListEventReq, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.reqId !== "") {
       writer.uint32(10).string(message.reqId);
+    }
+    if (message.forSend === true) {
+      writer.uint32(16).bool(message.forSend);
     }
     return writer;
   },
@@ -625,6 +635,13 @@ export const CertListEventReq = {
 
           message.reqId = reader.string();
           continue;
+        case 2:
+          if (tag != 16) {
+            break;
+          }
+
+          message.forSend = reader.bool();
+          continue;
       }
       if ((tag & 7) == 4 || tag == 0) {
         break;
@@ -635,12 +652,16 @@ export const CertListEventReq = {
   },
 
   fromJSON(object: any): CertListEventReq {
-    return { reqId: isSet(object.reqId) ? String(object.reqId) : "" };
+    return {
+      reqId: isSet(object.reqId) ? String(object.reqId) : "",
+      forSend: isSet(object.forSend) ? Boolean(object.forSend) : false,
+    };
   },
 
   toJSON(message: CertListEventReq): unknown {
     const obj: any = {};
     message.reqId !== undefined && (obj.reqId = message.reqId);
+    message.forSend !== undefined && (obj.forSend = message.forSend);
     return obj;
   },
 
@@ -651,6 +672,7 @@ export const CertListEventReq = {
   fromPartial<I extends Exact<DeepPartial<CertListEventReq>, I>>(object: I): CertListEventReq {
     const message = createBaseCertListEventReq();
     message.reqId = object.reqId ?? "";
+    message.forSend = object.forSend ?? false;
     return message;
   },
 };
@@ -913,7 +935,7 @@ export const CertDetailEventResp = {
 };
 
 function createBaseEmailInfoEventReq(): EmailInfoEventReq {
-  return { reqId: "", body: new Uint8Array() };
+  return { reqId: "", body: new Uint8Array(), recipient: "" };
 }
 
 export const EmailInfoEventReq = {
@@ -923,6 +945,9 @@ export const EmailInfoEventReq = {
     }
     if (message.body.length !== 0) {
       writer.uint32(18).bytes(message.body);
+    }
+    if (message.recipient !== "") {
+      writer.uint32(26).string(message.recipient);
     }
     return writer;
   },
@@ -948,6 +973,13 @@ export const EmailInfoEventReq = {
 
           message.body = reader.bytes();
           continue;
+        case 3:
+          if (tag != 26) {
+            break;
+          }
+
+          message.recipient = reader.string();
+          continue;
       }
       if ((tag & 7) == 4 || tag == 0) {
         break;
@@ -961,6 +993,7 @@ export const EmailInfoEventReq = {
     return {
       reqId: isSet(object.reqId) ? String(object.reqId) : "",
       body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
+      recipient: isSet(object.recipient) ? String(object.recipient) : "",
     };
   },
 
@@ -969,6 +1002,7 @@ export const EmailInfoEventReq = {
     message.reqId !== undefined && (obj.reqId = message.reqId);
     message.body !== undefined &&
       (obj.body = base64FromBytes(message.body !== undefined ? message.body : new Uint8Array()));
+    message.recipient !== undefined && (obj.recipient = message.recipient);
     return obj;
   },
 
@@ -980,6 +1014,7 @@ export const EmailInfoEventReq = {
     const message = createBaseEmailInfoEventReq();
     message.reqId = object.reqId ?? "";
     message.body = object.body ?? new Uint8Array();
+    message.recipient = object.recipient ?? "";
     return message;
   },
 };
@@ -1368,7 +1403,7 @@ export const SignEmailEventResp = {
 };
 
 function createBaseEncryptEmailEventReq(): EncryptEmailEventReq {
-  return { reqId: "", body: new Uint8Array(), attachments: [], to: "" };
+  return { reqId: "", body: new Uint8Array(), attachments: [], tos: [] };
 }
 
 export const EncryptEmailEventReq = {
@@ -1380,10 +1415,10 @@ export const EncryptEmailEventReq = {
       writer.uint32(18).bytes(message.body);
     }
     for (const v of message.attachments) {
-      writer.uint32(26).string(v!);
+      Attachment.encode(v!, writer.uint32(26).fork()).ldelim();
     }
-    if (message.to !== "") {
-      writer.uint32(34).string(message.to);
+    for (const v of message.tos) {
+      writer.uint32(34).string(v!);
     }
     return writer;
   },
@@ -1414,14 +1449,14 @@ export const EncryptEmailEventReq = {
             break;
           }
 
-          message.attachments.push(reader.string());
+          message.attachments.push(Attachment.decode(reader, reader.uint32()));
           continue;
         case 4:
           if (tag != 34) {
             break;
           }
 
-          message.to = reader.string();
+          message.tos.push(reader.string());
           continue;
       }
       if ((tag & 7) == 4 || tag == 0) {
@@ -1436,8 +1471,8 @@ export const EncryptEmailEventReq = {
     return {
       reqId: isSet(object.reqId) ? String(object.reqId) : "",
       body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
-      attachments: Array.isArray(object?.attachments) ? object.attachments.map((e: any) => String(e)) : [],
-      to: isSet(object.to) ? String(object.to) : "",
+      attachments: Array.isArray(object?.attachments) ? object.attachments.map((e: any) => Attachment.fromJSON(e)) : [],
+      tos: Array.isArray(object?.tos) ? object.tos.map((e: any) => String(e)) : [],
     };
   },
 
@@ -1447,11 +1482,15 @@ export const EncryptEmailEventReq = {
     message.body !== undefined &&
       (obj.body = base64FromBytes(message.body !== undefined ? message.body : new Uint8Array()));
     if (message.attachments) {
-      obj.attachments = message.attachments.map((e) => e);
+      obj.attachments = message.attachments.map((e) => e ? Attachment.toJSON(e) : undefined);
     } else {
       obj.attachments = [];
     }
-    message.to !== undefined && (obj.to = message.to);
+    if (message.tos) {
+      obj.tos = message.tos.map((e) => e);
+    } else {
+      obj.tos = [];
+    }
     return obj;
   },
 
@@ -1463,14 +1502,14 @@ export const EncryptEmailEventReq = {
     const message = createBaseEncryptEmailEventReq();
     message.reqId = object.reqId ?? "";
     message.body = object.body ?? new Uint8Array();
-    message.attachments = object.attachments?.map((e) => e) || [];
-    message.to = object.to ?? "";
+    message.attachments = object.attachments?.map((e) => Attachment.fromPartial(e)) || [];
+    message.tos = object.tos?.map((e) => e) || [];
     return message;
   },
 };
 
 function createBaseEncryptEmailEventResp(): EncryptEmailEventResp {
-  return { reqId: "", body: new Uint8Array() };
+  return { reqId: "", body: new Uint8Array(), error: "", reason: "" };
 }
 
 export const EncryptEmailEventResp = {
@@ -1480,6 +1519,12 @@ export const EncryptEmailEventResp = {
     }
     if (message.body.length !== 0) {
       writer.uint32(18).bytes(message.body);
+    }
+    if (message.error !== "") {
+      writer.uint32(26).string(message.error);
+    }
+    if (message.reason !== "") {
+      writer.uint32(34).string(message.reason);
     }
     return writer;
   },
@@ -1505,6 +1550,20 @@ export const EncryptEmailEventResp = {
 
           message.body = reader.bytes();
           continue;
+        case 3:
+          if (tag != 26) {
+            break;
+          }
+
+          message.error = reader.string();
+          continue;
+        case 4:
+          if (tag != 34) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
       }
       if ((tag & 7) == 4 || tag == 0) {
         break;
@@ -1518,6 +1577,8 @@ export const EncryptEmailEventResp = {
     return {
       reqId: isSet(object.reqId) ? String(object.reqId) : "",
       body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
+      error: isSet(object.error) ? String(object.error) : "",
+      reason: isSet(object.reason) ? String(object.reason) : "",
     };
   },
 
@@ -1526,6 +1587,8 @@ export const EncryptEmailEventResp = {
     message.reqId !== undefined && (obj.reqId = message.reqId);
     message.body !== undefined &&
       (obj.body = base64FromBytes(message.body !== undefined ? message.body : new Uint8Array()));
+    message.error !== undefined && (obj.error = message.error);
+    message.reason !== undefined && (obj.reason = message.reason);
     return obj;
   },
 
@@ -1537,6 +1600,8 @@ export const EncryptEmailEventResp = {
     const message = createBaseEncryptEmailEventResp();
     message.reqId = object.reqId ?? "";
     message.body = object.body ?? new Uint8Array();
+    message.error = object.error ?? "";
+    message.reason = object.reason ?? "";
     return message;
   },
 };
