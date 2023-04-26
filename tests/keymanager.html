@@ -42,7 +42,7 @@
         }
         console.log("echo=", echo);
         // 获取证书列表
-        const list = await km.certListEvent({});
+        const list = await km.certListEvent({to_sign: ''});
         if (list.error) {
           alert(echo.error);
         }

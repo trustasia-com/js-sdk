@@ -153,6 +153,8 @@ export class KeyManager {
         return pb.EmailInfoEventResp.decode(data);
       case pb.EventType.SignEmail:
         return pb.SignEmailEventResp.decode(data);
+      case pb.EventType.EncryptEmail:
+        return pb.EncryptEmailEventResp.decode(data);
     }
     throw Error("Unsupported message type");
   }
@@ -170,6 +172,9 @@ export class KeyManager {
         break;
       case pb.EventType.SignEmail:
         data = pb.SignEmailEventReq.encode(msg).finish();
+        break;
+      case pb.EventType.EncryptEmail:
+        data = pb.EncryptEmailEventReq.encode(msg).finish();
         break;
       default:
         throw Error("Unsupported message type");
