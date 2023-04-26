@@ -17,10 +17,8 @@ export enum EventType {
   CertDetail = 4,
   /** EmailInfo - 邮件信息 */
   EmailInfo = 5,
-  /** SignEmail - 签名邮件 */
-  SignEmail = 6,
-  /** EncryptEmail - 加密邮件 */
-  EncryptEmail = 7,
+  /** DisposeEmail - 处理邮件 */
+  DisposeEmail = 6,
   UNRECOGNIZED = -1,
 }
 
@@ -45,11 +43,8 @@ export function eventTypeFromJSON(object: any): EventType {
     case "EmailInfo":
       return EventType.EmailInfo;
     case 6:
-    case "SignEmail":
-      return EventType.SignEmail;
-    case 7:
-    case "EncryptEmail":
-      return EventType.EncryptEmail;
+    case "DisposeEmail":
+      return EventType.DisposeEmail;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -71,10 +66,8 @@ export function eventTypeToJSON(object: EventType): string {
       return "CertDetail";
     case EventType.EmailInfo:
       return "EmailInfo";
-    case EventType.SignEmail:
-      return "SignEmail";
-    case EventType.EncryptEmail:
-      return "EncryptEmail";
+    case EventType.DisposeEmail:
+      return "DisposeEmail";
     case EventType.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -178,35 +171,19 @@ export interface Attachment {
   body: Uint8Array;
 }
 
-export interface SignEmailEventReq {
-  reqId: string;
-  /** 邮件待签名/已签名内容 */
-  body: Uint8Array;
-  /** 附件路径/url */
-  attachments: Attachment[];
-  /** 指定证书 */
-  certHash: string;
-}
-
-export interface SignEmailEventResp {
-  reqId: string;
-  /** 邮件待签名/已签名内容 */
-  body: Uint8Array;
-}
-
-export interface EncryptEmailEventReq {
+export interface DisposeEmailEventReq {
   reqId: string;
   /** 待加密签名内容 */
   body: Uint8Array;
   /** 附件或URL */
   attachments: Attachment[];
-  /** 发送给 */
+  /** 发送给，有值即加密 */
   tos: string[];
-  /** 发件人 */
-  from: string;
+  /** 签名证书hash */
+  signCert: string;
 }
 
-export interface EncryptEmailEventResp {
+export interface DisposeEmailEventResp {
   reqId: string;
   /** 密文 */
   body: Uint8Array;
@@ -1246,186 +1223,12 @@ export const Attachment = {
   },
 };
 
-function createBaseSignEmailEventReq(): SignEmailEventReq {
-  return { reqId: "", body: new Uint8Array(), attachments: [], certHash: "" };
+function createBaseDisposeEmailEventReq(): DisposeEmailEventReq {
+  return { reqId: "", body: new Uint8Array(), attachments: [], tos: [], signCert: "" };
 }
 
-export const SignEmailEventReq = {
-  encode(message: SignEmailEventReq, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.reqId !== "") {
-      writer.uint32(10).string(message.reqId);
-    }
-    if (message.body.length !== 0) {
-      writer.uint32(18).bytes(message.body);
-    }
-    for (const v of message.attachments) {
-      Attachment.encode(v!, writer.uint32(26).fork()).ldelim();
-    }
-    if (message.certHash !== "") {
-      writer.uint32(34).string(message.certHash);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SignEmailEventReq {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSignEmailEventReq();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag != 10) {
-            break;
-          }
-
-          message.reqId = reader.string();
-          continue;
-        case 2:
-          if (tag != 18) {
-            break;
-          }
-
-          message.body = reader.bytes();
-          continue;
-        case 3:
-          if (tag != 26) {
-            break;
-          }
-
-          message.attachments.push(Attachment.decode(reader, reader.uint32()));
-          continue;
-        case 4:
-          if (tag != 34) {
-            break;
-          }
-
-          message.certHash = reader.string();
-          continue;
-      }
-      if ((tag & 7) == 4 || tag == 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SignEmailEventReq {
-    return {
-      reqId: isSet(object.reqId) ? String(object.reqId) : "",
-      body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
-      attachments: Array.isArray(object?.attachments) ? object.attachments.map((e: any) => Attachment.fromJSON(e)) : [],
-      certHash: isSet(object.certHash) ? String(object.certHash) : "",
-    };
-  },
-
-  toJSON(message: SignEmailEventReq): unknown {
-    const obj: any = {};
-    message.reqId !== undefined && (obj.reqId = message.reqId);
-    message.body !== undefined &&
-      (obj.body = base64FromBytes(message.body !== undefined ? message.body : new Uint8Array()));
-    if (message.attachments) {
-      obj.attachments = message.attachments.map((e) => e ? Attachment.toJSON(e) : undefined);
-    } else {
-      obj.attachments = [];
-    }
-    message.certHash !== undefined && (obj.certHash = message.certHash);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<SignEmailEventReq>, I>>(base?: I): SignEmailEventReq {
-    return SignEmailEventReq.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SignEmailEventReq>, I>>(object: I): SignEmailEventReq {
-    const message = createBaseSignEmailEventReq();
-    message.reqId = object.reqId ?? "";
-    message.body = object.body ?? new Uint8Array();
-    message.attachments = object.attachments?.map((e) => Attachment.fromPartial(e)) || [];
-    message.certHash = object.certHash ?? "";
-    return message;
-  },
-};
-
-function createBaseSignEmailEventResp(): SignEmailEventResp {
-  return { reqId: "", body: new Uint8Array() };
-}
-
-export const SignEmailEventResp = {
-  encode(message: SignEmailEventResp, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.reqId !== "") {
-      writer.uint32(10).string(message.reqId);
-    }
-    if (message.body.length !== 0) {
-      writer.uint32(18).bytes(message.body);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SignEmailEventResp {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSignEmailEventResp();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag != 10) {
-            break;
-          }
-
-          message.reqId = reader.string();
-          continue;
-        case 2:
-          if (tag != 18) {
-            break;
-          }
-
-          message.body = reader.bytes();
-          continue;
-      }
-      if ((tag & 7) == 4 || tag == 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SignEmailEventResp {
-    return {
-      reqId: isSet(object.reqId) ? String(object.reqId) : "",
-      body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
-    };
-  },
-
-  toJSON(message: SignEmailEventResp): unknown {
-    const obj: any = {};
-    message.reqId !== undefined && (obj.reqId = message.reqId);
-    message.body !== undefined &&
-      (obj.body = base64FromBytes(message.body !== undefined ? message.body : new Uint8Array()));
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<SignEmailEventResp>, I>>(base?: I): SignEmailEventResp {
-    return SignEmailEventResp.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SignEmailEventResp>, I>>(object: I): SignEmailEventResp {
-    const message = createBaseSignEmailEventResp();
-    message.reqId = object.reqId ?? "";
-    message.body = object.body ?? new Uint8Array();
-    return message;
-  },
-};
-
-function createBaseEncryptEmailEventReq(): EncryptEmailEventReq {
-  return { reqId: "", body: new Uint8Array(), attachments: [], tos: [], from: "" };
-}
-
-export const EncryptEmailEventReq = {
-  encode(message: EncryptEmailEventReq, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const DisposeEmailEventReq = {
+  encode(message: DisposeEmailEventReq, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.reqId !== "") {
       writer.uint32(10).string(message.reqId);
     }
@@ -1438,16 +1241,16 @@ export const EncryptEmailEventReq = {
     for (const v of message.tos) {
       writer.uint32(34).string(v!);
     }
-    if (message.from !== "") {
-      writer.uint32(42).string(message.from);
+    if (message.signCert !== "") {
+      writer.uint32(42).string(message.signCert);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): EncryptEmailEventReq {
+  decode(input: _m0.Reader | Uint8Array, length?: number): DisposeEmailEventReq {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseEncryptEmailEventReq();
+    const message = createBaseDisposeEmailEventReq();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1484,7 +1287,7 @@ export const EncryptEmailEventReq = {
             break;
           }
 
-          message.from = reader.string();
+          message.signCert = reader.string();
           continue;
       }
       if ((tag & 7) == 4 || tag == 0) {
@@ -1495,17 +1298,17 @@ export const EncryptEmailEventReq = {
     return message;
   },
 
-  fromJSON(object: any): EncryptEmailEventReq {
+  fromJSON(object: any): DisposeEmailEventReq {
     return {
       reqId: isSet(object.reqId) ? String(object.reqId) : "",
       body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
       attachments: Array.isArray(object?.attachments) ? object.attachments.map((e: any) => Attachment.fromJSON(e)) : [],
       tos: Array.isArray(object?.tos) ? object.tos.map((e: any) => String(e)) : [],
-      from: isSet(object.from) ? String(object.from) : "",
+      signCert: isSet(object.signCert) ? String(object.signCert) : "",
     };
   },
 
-  toJSON(message: EncryptEmailEventReq): unknown {
+  toJSON(message: DisposeEmailEventReq): unknown {
     const obj: any = {};
     message.reqId !== undefined && (obj.reqId = message.reqId);
     message.body !== undefined &&
@@ -1520,31 +1323,31 @@ export const EncryptEmailEventReq = {
     } else {
       obj.tos = [];
     }
-    message.from !== undefined && (obj.from = message.from);
+    message.signCert !== undefined && (obj.signCert = message.signCert);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<EncryptEmailEventReq>, I>>(base?: I): EncryptEmailEventReq {
-    return EncryptEmailEventReq.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<DisposeEmailEventReq>, I>>(base?: I): DisposeEmailEventReq {
+    return DisposeEmailEventReq.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<EncryptEmailEventReq>, I>>(object: I): EncryptEmailEventReq {
-    const message = createBaseEncryptEmailEventReq();
+  fromPartial<I extends Exact<DeepPartial<DisposeEmailEventReq>, I>>(object: I): DisposeEmailEventReq {
+    const message = createBaseDisposeEmailEventReq();
     message.reqId = object.reqId ?? "";
     message.body = object.body ?? new Uint8Array();
     message.attachments = object.attachments?.map((e) => Attachment.fromPartial(e)) || [];
     message.tos = object.tos?.map((e) => e) || [];
-    message.from = object.from ?? "";
+    message.signCert = object.signCert ?? "";
     return message;
   },
 };
 
-function createBaseEncryptEmailEventResp(): EncryptEmailEventResp {
+function createBaseDisposeEmailEventResp(): DisposeEmailEventResp {
   return { reqId: "", body: new Uint8Array(), error: "", reason: "" };
 }
 
-export const EncryptEmailEventResp = {
-  encode(message: EncryptEmailEventResp, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const DisposeEmailEventResp = {
+  encode(message: DisposeEmailEventResp, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.reqId !== "") {
       writer.uint32(10).string(message.reqId);
     }
@@ -1560,10 +1363,10 @@ export const EncryptEmailEventResp = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): EncryptEmailEventResp {
+  decode(input: _m0.Reader | Uint8Array, length?: number): DisposeEmailEventResp {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseEncryptEmailEventResp();
+    const message = createBaseDisposeEmailEventResp();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1604,7 +1407,7 @@ export const EncryptEmailEventResp = {
     return message;
   },
 
-  fromJSON(object: any): EncryptEmailEventResp {
+  fromJSON(object: any): DisposeEmailEventResp {
     return {
       reqId: isSet(object.reqId) ? String(object.reqId) : "",
       body: isSet(object.body) ? bytesFromBase64(object.body) : new Uint8Array(),
@@ -1613,7 +1416,7 @@ export const EncryptEmailEventResp = {
     };
   },
 
-  toJSON(message: EncryptEmailEventResp): unknown {
+  toJSON(message: DisposeEmailEventResp): unknown {
     const obj: any = {};
     message.reqId !== undefined && (obj.reqId = message.reqId);
     message.body !== undefined &&
@@ -1623,12 +1426,12 @@ export const EncryptEmailEventResp = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<EncryptEmailEventResp>, I>>(base?: I): EncryptEmailEventResp {
-    return EncryptEmailEventResp.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<DisposeEmailEventResp>, I>>(base?: I): DisposeEmailEventResp {
+    return DisposeEmailEventResp.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<EncryptEmailEventResp>, I>>(object: I): EncryptEmailEventResp {
-    const message = createBaseEncryptEmailEventResp();
+  fromPartial<I extends Exact<DeepPartial<DisposeEmailEventResp>, I>>(object: I): DisposeEmailEventResp {
+    const message = createBaseDisposeEmailEventResp();
     message.reqId = object.reqId ?? "";
     message.body = object.body ?? new Uint8Array();
     message.error = object.error ?? "";

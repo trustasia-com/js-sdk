@@ -94,15 +94,10 @@ export class KeyManager {
   ): Promise<pb.EmailInfoEventResp> {
     return this.promiseEvent(pb.EventType.EmailInfo, e);
   }
-  public async signEmailEvent(
-    e: pb.SignEmailEventReq
-  ): Promise<pb.SignEmailEventResp> {
-    return this.promiseEvent(pb.EventType.SignEmail, e);
-  }
-  public async encryptEmailEvent(
-    e: pb.EncryptEmailEventReq
-  ): Promise<pb.EncryptEmailEventResp> {
-    return this.promiseEvent(pb.EventType.EncryptEmail, e);
+  public async disposeEmailEvent(
+    e: pb.DisposeEmailEventReq
+  ): Promise<pb.DisposeEmailEventResp> {
+    return this.promiseEvent(pb.EventType.DisposeEmail, e);
   }
 
   // promise event
@@ -151,10 +146,8 @@ export class KeyManager {
         return pb.CertListEventResp.decode(data);
       case pb.EventType.EmailInfo:
         return pb.EmailInfoEventResp.decode(data);
-      case pb.EventType.SignEmail:
-        return pb.SignEmailEventResp.decode(data);
-      case pb.EventType.EncryptEmail:
-        return pb.EncryptEmailEventResp.decode(data);
+      case pb.EventType.DisposeEmail:
+        return pb.DisposeEmailEventResp.decode(data);
     }
     throw Error("Unsupported message type");
   }
@@ -170,11 +163,8 @@ export class KeyManager {
       case pb.EventType.EmailInfo:
         data = pb.EmailInfoEventReq.encode(msg).finish();
         break;
-      case pb.EventType.SignEmail:
-        data = pb.SignEmailEventReq.encode(msg).finish();
-        break;
-      case pb.EventType.EncryptEmail:
-        data = pb.EncryptEmailEventReq.encode(msg).finish();
+      case pb.EventType.DisposeEmail:
+        data = pb.DisposeEmailEventReq.encode(msg).finish();
         break;
       default:
         throw Error("Unsupported message type");
