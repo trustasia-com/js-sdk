@@ -19,7 +19,7 @@
     "copyFiles:umd": "copyfiles -u 1 \"src/**/*.js\" build/umd",
     "build:browser": "webpack",
     "clean": "rm -rf build",
-    "protoc": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=. ./src/keymanager/pb.proto"
+    "protoc": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=. ./src/smime/pb.proto"
   },
   "dependencies": {
     "@trustasia/keychat": "^0.1.1",

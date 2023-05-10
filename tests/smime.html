@@ -1,6 +1,7 @@
 <html>
   <head>
     <script src="/index.min.js"></script>
+    <!-- <script src="https://static.wekey.com/sdk/js-sdk-1.3.4.js"></script> -->
     <input type="file" id="file-input" />
   </head>
   <body>
@@ -24,7 +25,7 @@
       });
 
       // 初始化km
-      const km = new TrustAsia.KeyManager("localhost:8878", (num) => {
+      const km = new TrustAsia.WeKeySMIME("localhost:8878", (num) => {
         alert(num);
       });
       // 发送echo
@@ -42,13 +43,13 @@
         }
         console.log("echo=", echo);
         // 获取证书列表
-        const list = await km.certListEvent({to_sign: ''});
+        const list = await km.certListEvent({ to_sign: "" });
         if (list.error) {
           alert(echo.error);
         }
         console.log("certList=", list);
         // 邮件信息：验证结果/解密结果
-        const ok = await km.emailInfoEvent({ body: uint8Array, recipient: '' });
+        const ok = await km.emailInfoEvent({ body: uint8Array, recipient: "" });
         if (ok.signed) {
           console.log("已签名");
         } else {

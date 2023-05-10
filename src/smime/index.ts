@@ -1,7 +1,7 @@
 import * as pb from "./pb";
 import { Storage } from "./storage";
 
-export class KeyManager {
+export class WeKeySMIME {
   // websocket
   protected socket: WebSocket;
   protected host: string;

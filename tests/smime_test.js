@@ -6,7 +6,7 @@ const port = process.env.PORT || 8080;
 
 // sendFile will go here
 app.get("/", function (req, res) {
-  res.sendFile(path.join(__dirname, "/keymanager.html"));
+  res.sendFile(path.join(__dirname, "/smime.html"));
 });
 app.get("/index.min.js", function (req, res) {
   console.log(__dirname);
