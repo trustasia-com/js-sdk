@@ -1,5 +1,39 @@
+import * as pkijs from "pkijs";
+import * as pvutils from "pvutils";
+import parse from "emailjs-mime-parser";
+
 import * as pb from "./pb";
 import { Storage } from "./storage";
+import { calculateDigest, getSubjectValue } from "./utils";
+import { trustedCertificates } from "./roots";
+
+class EventEmitter {
+  private callbacks: Record<string, ((...args: any[]) => any)[]>;
+
+  constructor() {
+    this.callbacks = {};
+  }
+
+  on(event: string, cb: (data: any) => any, cb2: (data: any) => any) {
+    if (!this.callbacks[event]) this.callbacks[event] = [];
+    this.callbacks[event].push(cb, cb2);
+  }
+
+  emit(event: string, data: any) {
+    let cbs = this.callbacks[event];
+    if (cbs) {
+      cbs[0](data);
+    }
+  }
+
+  rm(event: string) {
+    let cbs = this.callbacks[event];
+    if (cbs) {
+      delete this.callbacks[event];
+      cbs[1]("Message Handle Timeout");
+    }
+  }
+}
 
 export class WeKeySMIME {
   // websocket
@@ -92,6 +126,12 @@ export class WeKeySMIME {
   public async emailInfoEvent(
     e: pb.EmailInfoEventReq
   ): Promise<pb.EmailInfoEventResp> {
+    if (!this.online) {
+      console.warn(
+        "wekey client is not connected, degraded to js mail parsing, revocation not checked"
+      );
+      return onlyVerifySMIME(e);
+    }
     return this.promiseEvent(pb.EventType.EmailInfo, e);
   }
   public async disposeEmailEvent(
@@ -183,30 +223,129 @@ export class WeKeySMIME {
   }
 }
 
-class EventEmitter {
-  private callbacks: Record<string, ((...args: any[]) => any)[]>;
-
-  constructor() {
-    this.callbacks = {};
+async function onlyVerifySMIME(
+  e: pb.EmailInfoEventReq
+): Promise<pb.EmailInfoEventResp> {
+  const result: pb.EmailInfoEventResp = {
+    reqId: "N/A",
+    body: e.body,
+    signed: false,
+    encrypted: false,
+    cert: undefined,
+    error: "",
+    reason: "",
+  };
+  const content = new TextDecoder("utf-8").decode(e.body);
+  const parser = parse(content);
+  console.log(parser);
+  if (parser.childNodes.length === 0) {
+    result.error = "invalid_email";
+    result.reason = "can not parse email content";
+    return result;
   }
-
-  on(event: string, cb: (data: any) => any, cb2: (data: any) => any) {
-    if (!this.callbacks[event]) this.callbacks[event] = [];
-    this.callbacks[event].push(cb, cb2);
+  if (parser.headers.from.length == 0) {
+    result.error = "no_from_header";
+    result.reason = "not found from in email";
+    return result;
   }
+  switch (parser.contentType.value) {
+    case "application/pkcs7-mime":
+      result.error = "unsupported_contentType";
+      result.reason = `unsupported content type ${parser.contentType.value}, please connect wekey client`;
+      return result;
+    case "multipart/signed":
+      result.signed = true;
+      break; // continue
+    default:
+      return result;
+  }
+  if (parser.childNodes.length == 2) {
+    const lastNode = parser.childNodes[1];
 
-  emit(event: string, data: any) {
-    let cbs = this.callbacks[event];
-    if (cbs) {
-      cbs[0](data);
+    // parse into pkijs types
+    let cmsContentSimpl;
+    let cmsSignedSimpl;
+
+    try {
+      cmsContentSimpl = pkijs.ContentInfo.fromBER(lastNode.content.buffer);
+      cmsSignedSimpl = new pkijs.SignedData({
+        schema: cmsContentSimpl.content,
+      });
+    } catch (error) {
+      result.error = "invalid_content";
+      result.reason = "can't parse email signdata";
+      return result;
+    }
+
+    // get signed data buffer
+    const signedDataBuffer = pvutils.stringToArrayBuffer(
+      parser.childNodes[0].raw.replace(/\n/g, "\r\n")
+    );
+
+    // verify the signed data
+    try {
+      const ok = await cmsSignedSimpl.verify({
+        extendedMode: true,
+        signer: 0,
+        data: signedDataBuffer,
+        checkChain: true,
+        trustedCerts: trustedCertificates,
+      });
+      console.log(
+        `S/MIME message ${
+          !ok ? "verification failed" : "successfully verified"
+        }!`
+      );
+      if (!ok) {
+        result.error = "verify_failed";
+        result.reason =
+          "failed to verify email signature, maybe content changed";
+        return result;
+      }
+      // verify certificate
+      let emails = [];
+      // 验证发件人
+      const from = parser.headers.from[0].value[0].address;
+      let validOK = false;
+      for (const ext of ok.signerCertificate!.extensions!) {
+        if (ext.extnID === "2.5.29.17") {
+          const altNames = ext.parsedValue.altNames;
+          for (const name of altNames) {
+            if (name.type === 1) {
+              emails.push(name.value);
+              if (name.value === from) {
+                validOK = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      result.cert = {
+        hash: await calculateDigest(
+          "sha-1",
+          ok.signerCertificate.toSchema().toBER(false)
+        ),
+        commonName: getSubjectValue(
+          ok.signerCertificate.subject.typesAndValues,
+          "2.5.4.3"
+        ),
+        emails,
+        issuer: getSubjectValue(
+          ok.signerCertificate.issuer.typesAndValues,
+          "2.5.4.3"
+        ),
+      };
+      if (!validOK) {
+        result.error = "from_notmathed";
+        result.reason = `Not matched from address: expected ${from}`;
+        return result;
+      }
+      console.log(validOK);
+    } catch (error) {
+      result.error = "verify_failed";
+      result.reason = `Error during verification ${error}`;
     }
   }
-
-  rm(event: string) {
-    let cbs = this.callbacks[event];
-    if (cbs) {
-      delete this.callbacks[event];
-      cbs[1]("Message Handle Timeout");
-    }
-  }
+  return result;
 }

@@ -9,6 +9,16 @@
       function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
+
+      // wekey客户端监听地址
+      const socketAddr = "localhost:8878";
+      // 配对数字回调
+      function onShowDigit(digit) {
+        alert(digit);
+      }
+      // 创建client
+      const cli = new TrustAsia.WeKeySMIME(socketAddr, onShowDigit);
+
       const fileInput = document.getElementById("file-input");
       let uint8Array;
       fileInput.addEventListener("change", (event) => {
@@ -19,19 +29,28 @@
           const fileContents = event.target.result;
           // 这里是文件内容，可以进行处理
           uint8Array = new Uint8Array(fileContents);
+          cli
+            .emailInfoEvent({
+              body: uint8Array,
+              recipient: "",
+            })
+            .then((ok) => {
+              if (ok.signed) {
+                console.log("已签名");
+              } else {
+                console.log("未签名");
+              }
+              if (ok.error) {
+                console.log(ok.error);
+              } else {
+                console.log("验证成功");
+              }
+              console.log(ok);
+            });
         });
 
         reader.readAsArrayBuffer(file);
       });
-
-      // wekey客户端监听地址
-      const socketAddr = "localhost:8878";
-      // 配对数字回调
-      function onShowDigit(digit) {
-        alert(digit);
-      }
-      // 创建client
-      const cli = new TrustAsia.WeKeySMIME(socketAddr, onShowDigit);
 
       // 设置配对操作回调
       cli.onHideDigit = (paired) => {
